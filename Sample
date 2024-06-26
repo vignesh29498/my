@@ -1,0 +1,15 @@
+import os
+
+def rename_csv_files(folder_path):
+    files = os.listdir(folder_path)
+    csv_files = [file for file in files if file.endswith('.csv')]
+    csv_files.sort()
+
+    for i, file in enumerate(csv_files, start=1):
+        new_file_name = f"raw_{i}.csv"
+        old_file_path = os.path.join(folder_path, file)
+        new_file_path = os.path.join(folder_path, new_file_name)
+        os.rename(old_file_path, new_file_path)
+
+folder_path = 'path/to/your/folder'
+rename_csv_files(folder_path)
