@@ -1,0 +1,4 @@
+Text_ID,ICD_C1_x,ICD_C2_x,ICD_C1_y,ICD_C2_y
+1,Diagnosis A,Procedure X,Diagnosis A,Procedure X
+2,Diagnosis B,Procedure Y,Diagnosis B,Procedure Y
+3,Diagnosis C,Procedure Z,Diagnosis C,Procedure Z
