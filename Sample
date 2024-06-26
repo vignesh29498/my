@@ -8,8 +8,8 @@ from sklearn.pipeline import Pipeline
 import joblib  # Correct import for joblib
 
 def load_and_merge_data(raw_folder, meaning_folder):
-    raw_files = glob.glob(os.path.join(raw_folder, 'handoff_*.csv'))
-    meaning_files = glob.glob(os.path.join(meaning_folder, 'icd_*.csv'))
+    raw_files = glob.glob(os.path.join(raw_folder, 'Handoff*.csv'))
+    meaning_files = glob.glob(os.path.join(meaning_folder, 'ICD*.csv'))
     
     if not raw_files or not meaning_files:
         print("No files found. Please check your file paths and patterns.")
@@ -124,10 +124,10 @@ def predict_meanings(model, new_raw_file, output_file):
     print(f"Predictions saved to {output_file}")
 
 if __name__ == "__main__":
-    raw_folder = 'path/to/handoff/files'
-    meaning_folder = 'path/to/icd/files'
-    new_raw_file = 'path/to/new_handoff.csv'
-    output_file = 'path/to/predicted_meanings.csv'
+    raw_folder = 'AIML/Handoff'
+    meaning_folder = 'AIML/ICD'
+    new_raw_file = 'AIML/new_handoff.csv'
+    output_file = 'AIML/predicted_meanings.csv'
     
     # Load and merge data
     data = load_and_merge_data(raw_folder, meaning_folder)
