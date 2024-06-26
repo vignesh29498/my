@@ -29,21 +29,20 @@ def load_and_merge_data(raw_folder, meaning_folder):
         print(f"Meaning file '{meaning_file}' columns: {meaning_data.columns}")
         
         # Check and correct column names if necessary
-        if 'Text_ID' in raw_data.columns:
-            raw_data.rename(columns={'Text_ID': 'text_id'}, inplace=True)
-        if 'Text_ID_1' in raw_data.columns:
-            raw_data.rename(columns={'Text_ID_1': 'Text_ID_1'}, inplace=True)
-        if 'ICD_C1' in meaning_data.columns:
-            meaning_data.rename(columns={'ICD_C1': 'ICD_C1'}, inplace=True)
-        if 'ICD_C2' in meaning_data.columns:
-            meaning_data.rename(columns={'ICD_C2': 'ICD_C2'}, inplace=True)
+        raw_id_col = [col for col in raw_data.columns if 'Text_ID' in col]
+        if raw_id_col:
+            raw_data.rename(columns={raw_id_col[0]: 'text_id'}, inplace=True)
+        
+        meaning_id_col = [col for col in meaning_data.columns if 'Text_ID' in col]
+        if meaning_id_col:
+            meaning_data.rename(columns={meaning_id_col[0]: 'text_id'}, inplace=True)
         
         if 'text_id' not in raw_data.columns or 'text_id' not in meaning_data.columns:
             print(f"Missing 'text_id' in {raw_file} or {meaning_file}")
             continue
         
         # Ensure all columns are strings before concatenation
-        raw_data['Raw Text'] = raw_data[['text_id', 'Text_ID_1']].astype(str).agg(' '.join, axis=1)
+        raw_data['Raw Text'] = raw_data.drop(columns=['text_id']).astype(str).agg(' '.join, axis=1)
         
         combined_data = pd.merge(raw_data[['text_id', 'Raw Text']], meaning_data[['text_id', 'ICD_C1', 'ICD_C2']], on='text_id')
         all_data.append(combined_data)
@@ -101,17 +100,17 @@ def predict_meanings(model, new_raw_file, output_file):
         return
     
     new_raw_data = pd.read_csv(new_raw_file)
-    if 'Text_ID' in new_raw_data.columns:
-        new_raw_data.rename(columns={'Text_ID': 'text_id'}, inplace=True)
-    if 'Text_ID_1' in new_raw_data.columns:
-        new_raw_data.rename(columns={'Text_ID_1': 'Text_ID_1'}, inplace=True)
+    
+    raw_id_col = [col for col in new_raw_data.columns if 'Text_ID' in col]
+    if raw_id_col:
+        new_raw_data.rename(columns={raw_id_col[0]: 'text_id'}, inplace=True)
     
     if 'text_id' not in new_raw_data.columns:
         print(f"New raw file is missing 'text_id' column: {new_raw_file}")
         return
     
     # Ensure all columns are strings before concatenation
-    new_raw_data['Raw Text'] = new_raw_data[['text_id', 'Text_ID_1']].astype(str).agg(' '.join, axis=1)
+    new_raw_data['Raw Text'] = new_raw_data.drop(columns=['text_id']).astype(str).agg(' '.join, axis=1)
     
     # Predict meanings using the trained model
     predicted_meanings = model.predict(new_raw_data['Raw Text'])
