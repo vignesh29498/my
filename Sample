@@ -31,8 +31,12 @@ def load_and_merge_data(raw_folder, meaning_folder):
         # Check and correct column names if necessary
         if 'Text_ID' in raw_data.columns:
             raw_data.rename(columns={'Text_ID': 'text_id'}, inplace=True)
-        if 'Text_ID' in meaning_data.columns:
-            meaning_data.rename(columns={'Text_ID': 'text_id'}, inplace=True)
+        if 'Text_ID_1' in raw_data.columns:
+            raw_data.rename(columns={'Text_ID_1': 'Text_ID_1'}, inplace=True)
+        if 'ICD_C1' in meaning_data.columns:
+            meaning_data.rename(columns={'ICD_C1': 'ICD_C1'}, inplace=True)
+        if 'ICD_C2' in meaning_data.columns:
+            meaning_data.rename(columns={'ICD_C2': 'ICD_C2'}, inplace=True)
         
         if 'text_id' not in raw_data.columns or 'text_id' not in meaning_data.columns:
             print(f"Missing 'text_id' in {raw_file} or {meaning_file}")
@@ -99,6 +103,9 @@ def predict_meanings(model, new_raw_file, output_file):
     new_raw_data = pd.read_csv(new_raw_file)
     if 'Text_ID' in new_raw_data.columns:
         new_raw_data.rename(columns={'Text_ID': 'text_id'}, inplace=True)
+    if 'Text_ID_1' in new_raw_data.columns:
+        new_raw_data.rename(columns={'Text_ID_1': 'Text_ID_1'}, inplace=True)
+    
     if 'text_id' not in new_raw_data.columns:
         print(f"New raw file is missing 'text_id' column: {new_raw_file}")
         return
