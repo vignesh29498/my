@@ -1,0 +1,6 @@
+Text_ID,ICD_C1,ICD_C2,ICD_C3,ICD_C4
+1,IGP Secondary Field,secondary_igp_cust_ac_no,secondary_igp_cust_no,secondary_igp_cust_ac_no
+2,Secondary Table,secondary_sttm_cust_account,secondary_sttm_cust_account,secondary_sttm_cust_account
+3,Secondary_Field,secondary_cust_ac_no,secondary_cust no,secondary_cust_ac_no
+4,Secondary_Business_Logic,"secondary_SUBSTR(cust_ac_no,-",secondary_cust_no,secondary_cust_ac_no
+5,Secondary_Remarks,fetching secondary account no details from secondary_sttm_cust_account table,,

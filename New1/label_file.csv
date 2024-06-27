@@ -1,0 +1,4 @@
+Handoff_File,ICD_File,Handoff_Columns,ICD_Columns
+Handoff_1.csv,ICD_1.csv,Text_ID Text_ID_1 Text_ID_2 Text_ID_3,Text_ID ICD_C1 ICD_C2 ICD_C3 ICD_C4
+Handoff_2.csv,ICD_2.csv,Text_ID Text_ID_1 Text_ID_2 Text_ID_3,Text_ID ICD_C1 ICD_C2 ICD_C3 ICD_C4
+Handoff_3.csv,ICD_3.csv,Text_ID Text_ID_1 Text_ID_2 Text_ID_3,Text_ID ICD_C1 ICD_C2 ICD_C3 ICD_C4

@@ -1,0 +1,6 @@
+Text_ID,ICD_C1,ICD_C2,ICD_C3,ICD_C4
+1,IGP Tertiary Field,tertiary_igp_cust_ac_no,tertiary_igp_cust_no,tertiary_igp_cust_ac_no
+2,Tertiary Table,tertiary_sttm_cust_account,tertiary_sttm_cust_account,tertiary_sttm_cust_account
+3,Tertiary_Field,tertiary_cust_ac_no,tertiary_cust no,tertiary_cust_ac_no
+4,Tertiary_Business_Logic,"tertiary_SUBSTR(cust_ac_no,-",tertiary_cust_no,tertiary_cust_ac_no
+5,Tertiary_Remarks,fetching tertiary account no details from tertiary_sttm_cust_account table,,

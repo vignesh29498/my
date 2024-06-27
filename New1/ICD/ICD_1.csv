@@ -1,0 +1,6 @@
+Text_ID,ICD_C1,ICD_C2,ICD_C3,ICD_C4
+1,IGP Base Field,igp_cust_ac_no,igp_cust_no,igp_cust_ac_no
+2,Table Name,sttm_cust_account,sttm_cust_account,sttm_cust_account
+3,Field_name,cust_ac_no,cust no,cust_ac_no
+4,Business_Logic,"SUBSTR(cust_ac_no,-",cust_no,cust_ac_no
+5,Remarks,fetching account no details from sttm_cust_account table,,

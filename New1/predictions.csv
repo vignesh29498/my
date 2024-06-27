@@ -1,0 +1,15 @@
+Text_ID,Predicted_Meaning
+1,"Secondary_Business_Logic secondary_SUBSTR(cust_ac_no,- secondary_cust_no secondary_cust_ac_no"
+2,"Secondary_Business_Logic secondary_SUBSTR(cust_ac_no,- secondary_cust_no secondary_cust_ac_no"
+3,"Secondary_Business_Logic secondary_SUBSTR(cust_ac_no,- secondary_cust_no secondary_cust_ac_no"
+4,"Secondary_Business_Logic secondary_SUBSTR(cust_ac_no,- secondary_cust_no secondary_cust_ac_no"
+5,"Secondary_Business_Logic secondary_SUBSTR(cust_ac_no,- secondary_cust_no secondary_cust_ac_no"
+6,"Tertiary_Business_Logic tertiary_SUBSTR(cust_ac_no,- tertiary_cust_no tertiary_cust_ac_no"
+7,Remarks fetching account no details from sttm_cust_account table nan nan
+8,"Tertiary_Business_Logic tertiary_SUBSTR(cust_ac_no,- tertiary_cust_no tertiary_cust_ac_no"
+9,Remarks fetching account no details from sttm_cust_account table nan nan
+10,"Secondary_Business_Logic secondary_SUBSTR(cust_ac_no,- secondary_cust_no secondary_cust_ac_no"
+11,"Secondary_Business_Logic secondary_SUBSTR(cust_ac_no,- secondary_cust_no secondary_cust_ac_no"
+12,"Secondary_Business_Logic secondary_SUBSTR(cust_ac_no,- secondary_cust_no secondary_cust_ac_no"
+13,IGP Tertiary Field tertiary_igp_cust_ac_no tertiary_igp_cust_no tertiary_igp_cust_ac_no
+14,Tertiary Table tertiary_sttm_cust_account tertiary_sttm_cust_account tertiary_sttm_cust_account
