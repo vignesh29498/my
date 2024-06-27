@@ -28,7 +28,11 @@ def train_model(label_file):
 
         # Create a combined DataFrame for training
         combined_data = handoff_data.merge(icd_data, on='Text_ID')
-
+        
+        if combined_data.empty:
+            print(f"No matching data found for {handoff_file} and {icd_file}. Skipping.")
+            continue
+        
         # Prepare the training data
         X = combined_data[handoff_columns[1:]]
         y = combined_data.drop(columns=['Text_ID'] + handoff_columns[1:])
@@ -61,6 +65,9 @@ def predict_meanings(label_file, new_raw_file, output_file):
     new_data = pd.read_csv(new_raw_file, usecols=handoff_columns)
     new_data.fillna(0, inplace=True)  # Assuming missing values should be treated as 0
     
+    if new_data.empty:
+        raise ValueError("The new raw file has no data.")
+    
     predictions = pd.DataFrame(new_data['Text_ID'])
     
     for column in icd_columns[1:]:
@@ -79,6 +86,11 @@ def predict_meanings(label_file, new_raw_file, output_file):
     icd_data['Text_ID'] = icd_data['Text_ID'].astype(str)
 
     result = predictions.merge(icd_data, on='Text_ID', how='inner')
+    
+    if result.empty:
+        raise ValueError("No matching Text_IDs found between predictions and ICD data.")
+    
+    result = result[icd_columns]  # Only keep ICD columns
     
     result.to_csv(output_file, index=False)
     print(f'Saved predictions to {output_file}')
