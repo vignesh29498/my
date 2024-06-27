@@ -13,7 +13,7 @@ def train_model(label_file):
         icd_file = row['ICD_File']
         handoff_columns = row['Handoff_Columns'].split()
         icd_columns = row['ICD_Columns'].split()
-        
+
         # Load Handoff data
         handoff_data = pd.read_csv(f'AIML/Handoff/{handoff_file}', usecols=handoff_columns)
         handoff_data.fillna(0, inplace=True)  # Assuming missing values should be treated as 0
@@ -26,26 +26,29 @@ def train_model(label_file):
         handoff_data['Text_ID'] = handoff_data['Text_ID'].astype(str)
         icd_data['Text_ID'] = icd_data['Text_ID'].astype(str)
 
+        print(f"Loaded {handoff_file} with columns: {handoff_data.columns}")
+        print(f"Loaded {icd_file} with columns: {icd_data.columns}")
+
         # Create a combined DataFrame for training
         combined_data = handoff_data.merge(icd_data, on='Text_ID')
-        
+
         if combined_data.empty:
             print(f"No matching data found for {handoff_file} and {icd_file}. Skipping.")
             continue
-        
+
         # Prepare the training data
         X = combined_data[handoff_columns[1:]]
         y = combined_data.drop(columns=['Text_ID'] + handoff_columns[1:])
-        
+
         for column in y.columns:
             model = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000))
             model.fit(X, y[column])
-            
+
             # Save the model
             model_filename = f'model_{handoff_file.split(".")[0]}_{column}.pkl'
             joblib.dump(model, model_filename)
             print(f'Saved model to {model_filename}')
-    
+
 def predict_meanings(label_file, new_raw_file, output_file):
     labels = pd.read_csv(label_file)
     handoff_columns = None
@@ -58,26 +61,26 @@ def predict_meanings(label_file, new_raw_file, output_file):
             icd_file = row['ICD_File']
             icd_columns = row['ICD_Columns'].split()
             break
-    
+
     if handoff_columns is None:
         raise ValueError("No matching entry found in the label file for the provided new_raw_file.")
-    
+
     new_data = pd.read_csv(new_raw_file, usecols=handoff_columns)
     new_data.fillna(0, inplace=True)  # Assuming missing values should be treated as 0
-    
+
     if new_data.empty:
         raise ValueError("The new raw file has no data.")
-    
+
     predictions = pd.DataFrame(new_data['Text_ID'])
-    
+
     for column in icd_columns[1:]:
         model_filename = f'model_{os.path.basename(new_raw_file).split(".")[0]}_{column}.pkl'
         if not os.path.exists(model_filename):
             raise ValueError(f"Model file {model_filename} does not exist.")
-        
+
         model = joblib.load(model_filename)
         predictions[column] = model.predict(new_data[handoff_columns[1:]])
-    
+
     icd_data = pd.read_csv(f'AIML/ICD/{icd_file}', usecols=icd_columns)
     icd_data = icd_data[icd_columns]  # Keep only the relevant columns
 
@@ -86,12 +89,12 @@ def predict_meanings(label_file, new_raw_file, output_file):
     icd_data['Text_ID'] = icd_data['Text_ID'].astype(str)
 
     result = predictions.merge(icd_data, on='Text_ID', how='inner')
-    
+
     if result.empty:
         raise ValueError("No matching Text_IDs found between predictions and ICD data.")
-    
+
     result = result[icd_columns]  # Only keep ICD columns
-    
+
     result.to_csv(output_file, index=False)
     print(f'Saved predictions to {output_file}')
 
