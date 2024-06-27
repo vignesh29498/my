@@ -1,144 +1,92 @@
 import pandas as pd
-import glob
-import os
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
-import joblib  # Correct import for joblib
+from sklearn.pipeline import make_pipeline
+import os
+import joblib
 
-def load_and_merge_data(raw_folder, meaning_folder):
-    raw_files = glob.glob(os.path.join(raw_folder, 'Handoff*.csv'))
-    meaning_files = glob.glob(os.path.join(meaning_folder, 'ICD*.csv'))
-    
-    if not raw_files or not meaning_files:
-        print("No files found. Please check your file paths and patterns.")
-        return pd.DataFrame()  # Return an empty DataFrame
-    
-    raw_files.sort()
-    meaning_files.sort()
-    
-    all_data = []
-    
-    for raw_file, meaning_file in zip(raw_files, meaning_files):
-        raw_data = pd.read_csv(raw_file)
-        meaning_data = pd.read_csv(meaning_file)
-        
-        # Debug: print columns of each file
-        print(f"Raw file '{raw_file}' columns: {raw_data.columns}")
-        print(f"Meaning file '{meaning_file}' columns: {meaning_data.columns}")
-        
-        # Check and correct column names if necessary
-        raw_id_col = [col for col in raw_data.columns if 'Text_ID' in col]
-        if raw_id_col:
-            raw_data.rename(columns={raw_id_col[0]: 'text_id'}, inplace=True)
-        
-        meaning_id_col = [col for col in meaning_data.columns if 'Text_ID' in col]
-        if meaning_id_col:
-            meaning_data.rename(columns={meaning_id_col[0]: 'text_id'}, inplace=True)
-        
-        if 'text_id' not in raw_data.columns or 'text_id' not in meaning_data.columns:
-            print(f"Missing 'text_id' in {raw_file} or {meaning_file}")
-            continue
-        
-        # Ensure all columns are strings before concatenation
-        raw_data['Raw Text'] = raw_data.drop(columns=['text_id']).astype(str).agg(' '.join, axis=1)
-        
-        combined_data = pd.merge(raw_data[['text_id', 'Raw Text']], meaning_data[['text_id', 'ICD_C1', 'ICD_C2']], on='text_id')
-        all_data.append(combined_data)
-    
-    if all_data:
-        return pd.concat(all_data, ignore_index=True)
-    else:
-        return pd.DataFrame()  # Return an empty DataFrame if no data was combined
+def train_model(label_file):
+    labels = pd.read_csv(label_file)
 
-def preprocess_data(data):
-    if data.empty:
-        print("No data to preprocess. Exiting.")
-        return None, None, None
-    
-    # Convert 'Raw Text' column to string
-    data['Raw Text'] = data['Raw Text'].astype(str)
-    
-    # Combine the meanings into a single column for training
-    data['Meaning'] = data[['ICD_C1', 'ICD_C2']].astype(str).agg(' '.join, axis=1)
-    
-    X = data['Raw Text']
-    y = data['Meaning']
-    
-    return X, y
-
-def train_model(X, y):
-    if X is None or y is None:
-        print("No data to train. Exiting.")
-        return None
-    
-    # Build a pipeline with TF-IDF Vectorizer and Logistic Regression
-    model_pipeline = Pipeline([
-        ('tfidf', TfidfVectorizer()),
-        ('clf', LogisticRegression(max_iter=1000))
-    ])
-    
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    model_pipeline.fit(X_train, y_train)
-    
-    # Debug: Print model accuracy on the test set
-    accuracy = model_pipeline.score(X_test, y_test)
-    print(f"Model accuracy on test set: {accuracy:.2f}")
-    
-    # Save the trained model to a file using joblib
-    model_filename = 'text_pattern_model.pkl'  # Name of the model file
-    model_path = os.path.join('model', model_filename)  # Replace with your desired path
-    joblib.dump(model_pipeline, model_path)
-    print(f"Trained model saved to {model_path}")
-    
-    return model_pipeline
-
-def predict_meanings(model, new_raw_file, output_file):
-    if model is None:
-        print("Model not available. Exiting.")
-        return
-    
-    new_raw_data = pd.read_csv(new_raw_file)
-    
-    raw_id_col = [col for col in new_raw_data.columns if 'Text_ID' in col]
-    if raw_id_col:
-        new_raw_data.rename(columns={raw_id_col[0]: 'text_id'}, inplace=True)
-    
-    if 'text_id' not in new_raw_data.columns:
-        print(f"New raw file is missing 'text_id' column: {new_raw_file}")
-        return
-    
-    # Ensure all columns are strings before concatenation
-    new_raw_data['Raw Text'] = new_raw_data.drop(columns=['text_id']).astype(str).agg(' '.join, axis=1)
-    
-    # Predict meanings using the trained model
-    predicted_meanings = model.predict(new_raw_data['Raw Text'])
-    
-    # Add predicted meanings to the new_raw_data DataFrame
-    new_raw_data['Predicted Meaning'] = predicted_meanings
-    
-    # Save predictions to an output file
-    new_raw_data.to_csv(output_file, index=False)
-    print(f"Predictions saved to {output_file}")
-
-if __name__ == "__main__":
-    raw_folder = 'AIML/Handoff'
-    meaning_folder = 'AIML/ICD'
-    new_raw_file = 'AIML/new_handoff.csv'
-    output_file = 'AIML/predicted_meanings.csv'
-    
-    # Load and merge data
-    data = load_and_merge_data(raw_folder, meaning_folder)
-    
-    if data.empty:
-        print("No data to process. Please check your input files.")
-    else:
-        # Preprocess data
-        X, y = preprocess_data(data)
+    for idx, row in labels.iterrows():
+        handoff_file = row['Handoff_File']
+        icd_file = row['ICD_File']
+        handoff_columns = row['Handoff_Columns'].split()
+        icd_columns = row['ICD_Columns'].split()
         
-        # Train model
-        model = train_model(X, y)
+        # Load Handoff data
+        handoff_data = pd.read_csv(f'AIML/Handoff/{handoff_file}', usecols=handoff_columns)
+        handoff_data.fillna('', inplace=True)
         
-        # Predict and save results from the new raw file
-        predict_meanings(model, new_raw_file, output_file)
+        # Load ICD data
+        icd_data = pd.read_csv(f'AIML/ICD/{icd_file}', usecols=icd_columns)
+        icd_data.fillna('', inplace=True)
+
+        # Ensure Text_ID columns are of the same type
+        handoff_data['Text_ID'] = handoff_data['Text_ID'].astype(str)
+        icd_data['Text_ID'] = icd_data['Text_ID'].astype(str)
+
+        # Combine the text columns
+        handoff_data['combined_text'] = handoff_data.apply(lambda x: ' '.join(x.astype(str)), axis=1)
+        
+        # Create a combined DataFrame for training
+        combined_data = handoff_data[['Text_ID', 'combined_text']].merge(icd_data, on='Text_ID')
+
+        # Prepare the training data
+        X = combined_data['combined_text']
+        y = combined_data.drop(columns=['Text_ID', 'combined_text'])
+        
+        for column in y.columns:
+            model = make_pipeline(TfidfVectorizer(), LogisticRegression(max_iter=1000))
+            model.fit(X, y[column])
+            
+            # Save the model
+            model_filename = f'model_{handoff_file.split(".")[0]}_{column}.pkl'
+            joblib.dump(model, model_filename)
+            print(f'Saved model to {model_filename}')
+    
+def predict_meanings(label_file, new_raw_file, output_file):
+    labels = pd.read_csv(label_file)
+    handoff_columns = None
+    icd_file = None
+    icd_columns = None
+
+    for idx, row in labels.iterrows():
+        if row['Handoff_File'] == os.path.basename(new_raw_file):
+            handoff_columns = row['Handoff_Columns'].split()
+            icd_file = row['ICD_File']
+            icd_columns = row['ICD_Columns'].split()
+            break
+    
+    if handoff_columns is None:
+        raise ValueError("No matching entry found in the label file for the provided new_raw_file.")
+    
+    new_data = pd.read_csv(new_raw_file, usecols=handoff_columns)
+    new_data.fillna('', inplace=True)
+    new_data['combined_text'] = new_data.apply(lambda x: ' '.join(x.astype(str)), axis=1)
+    
+    predictions = pd.DataFrame(new_data['Text_ID'])
+    
+    for column in icd_columns[1:]:
+        model_filename = f'model_{os.path.basename(new_raw_file).split(".")[0]}_{column}.pkl'
+        if not os.path.exists(model_filename):
+            raise ValueError(f"Model file {model_filename} does not exist.")
+        
+        model = joblib.load(model_filename)
+        predictions[column] = model.predict(new_data['combined_text'])
+    
+    icd_data = pd.read_csv(f'AIML/ICD/{icd_file}', usecols=icd_columns)
+    icd_data = icd_data[icd_columns]  # Keep only the relevant columns
+
+    # Ensure Text_ID columns are of the same type
+    predictions['Text_ID'] = predictions['Text_ID'].astype(str)
+    icd_data['Text_ID'] = icd_data['Text_ID'].astype(str)
+
+    result = predictions.merge(icd_data, on='Text_ID')
+    
+    result.to_csv(output_file, index=False)
+    print(f'Saved predictions to {output_file}')
+
+# Example usage
+# train_model('label_file.csv')
+# predict_meanings('label_file.csv', 'AIML/Handoff/handoff_1.csv', 'predicted_output.csv')
