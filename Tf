@@ -1,0 +1,152 @@
+import pandas as pd
+import re
+import tensorflow as tf
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+# Load training data from CSV
+file_path = 'data_dis.csv'
+df = pd.read_csv(file_path)
+print("Loaded Data:")
+print(df)
+
+# Feature extraction using .apply
+df['length'] = df['value'].apply(len)
+df['is_numeric_dm'] = df['value'].apply(lambda x: int(x.isdigit()))
+df['is_alphabetic_dm'] = df['value'].apply(lambda x: int(x.isalpha()))
+df['is_alphanumeric_dm'] = df['value'].apply(lambda x: int(x.isalnum()))
+df['has_hyphen_dm'] = df['value'].apply(lambda x: int('-' in x))
+df['has_letters_dm'] = df['value'].apply(lambda x: int(any(c.isalpha() for c in x)))
+df['has_numbers_dm'] = df['value'].apply(lambda x: int(any(c.isdigit() for c in x)))
+df['has_spaces_dm'] = df['value'].apply(lambda x: int(any(c.isspace() for c in x)))
+df['has_special_chars_dm'] = df['value'].apply(lambda x: int(bool(re.search('[^a-zA-Z0-9\s]', x))))
+
+df['is_numeric_re'] = df['value'].apply(lambda x: int(bool(re.match('^\d+$', x))))
+df['is_alphabetic_re'] = df['value'].apply(lambda x: int(bool(re.match('^[a-zA-Z]+$', x))))
+df['is_alphanumeric_re'] = df['value'].apply(lambda x: int(bool(re.match('^[a-zA-Z0-9]+$', x))))
+df['has_hyphen_re'] = df['value'].apply(lambda x: int(bool(re.search('-', x))))
+df['has_letters_re'] = df['value'].apply(lambda x: int(bool(re.search('[a-zA-Z]', x))))
+df['has_numbers_re'] = df['value'].apply(lambda x: int(bool(re.search('[0-9]', x))))
+df['has_spaces_re'] = df['value'].apply(lambda x: int(bool(re.search('\s', x))))
+df['has_special_chars_re'] = df['value'].apply(lambda x: int(bool(re.search('[^a-zA-Z0-9\s]', x))))
+df['is_exactly_3_digits'] = df['value'].apply(lambda x: int(bool(re.match('^\d{3}$', x))))
+
+print("Extracted Features:")
+print(df.head())
+
+# Combine all features into a single DataFrame
+combined_features = df[[
+    'length', 
+    'is_numeric_dm', 'is_alphabetic_dm', 'is_alphanumeric_dm', 'has_hyphen_dm', 'has_letters_dm', 'has_numbers_dm', 'has_spaces_dm', 'has_special_chars_dm',
+    'is_numeric_re', 'is_alphabetic_re', 'is_alphanumeric_re', 'has_hyphen_re', 'has_letters_re', 'has_numbers_re', 'has_spaces_re', 'has_special_chars_re',
+    'is_exactly_3_digits'
+]]
+
+print("Combined Features for Model Training:")
+print(combined_features)
+
+
+
+
+
+# Encode labels
+le = LabelEncoder()
+y_encoded = le.fit_transform(df['label'])
+print("Encoded Labels:")
+print(y_encoded)
+print("Label Distribution:")
+print(pd.Series(y_encoded).value_counts())
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(combined_features, y_encoded, test_size=0.2, random_state=42)
+
+# Convert to TensorFlow datasets
+train_dataset = tf.data.Dataset.from_tensor_slices((X_train.values, y_train)).batch(32)
+test_dataset = tf.data.Dataset.from_tensor_slices((X_test.values, y_test)).batch(32)
+
+
+
+
+
+# Build a simple neural network model
+model = Sequential([
+    Dense(64, activation='relu', input_shape=(combined_features.shape[1],)),
+    Dense(64, activation='relu'),
+    Dense(len(le.classes_), activation='softmax')
+])
+
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+# Train the model
+model.fit(train_dataset, epochs=10, validation_data=test_dataset)
+
+
+
+
+# Save the trained model and label encoder to local files
+model.save('tf_model.h5')
+
+with open('label_encoder.pkl', 'wb') as f:
+    pickle.dump(le, f)
+
+print("Model and label encoder saved successfully.")
+
+
+
+
+
+
+# Load the trained model and label encoder
+model = tf.keras.models.load_model('tf_model.h5')
+
+with open('label_encoder.pkl', 'rb') as f:
+    le = pickle.load(f)
+
+# Manually provided list of data for prediction
+data_to_predict = ['654321', 'B123456789', '5678123456789', '6789', '3D4F5H', '666-7890', '490', '400']
+
+# Prepare features for prediction using .apply
+predict_df = pd.DataFrame(data_to_predict, columns=['value'])
+
+predict_df['length'] = predict_df['value'].apply(len)
+predict_df['is_numeric_dm'] = predict_df['value'].apply(lambda x: int(x.isdigit()))
+predict_df['is_alphabetic_dm'] = predict_df['value'].apply(lambda x: int(x.isalpha()))
+predict_df['is_alphanumeric_dm'] = predict_df['value'].apply(lambda x: int(x.isalnum()))
+predict_df['has_hyphen_dm'] = predict_df['value'].apply(lambda x: int('-' in x))
+predict_df['has_letters_dm'] = predict_df['value'].apply(lambda x: int(any(c.isalpha() for c in x)))
+predict_df['has_numbers_dm'] = predict_df['value'].apply(lambda x: int(any(c.isdigit() for c in x)))
+predict_df['has_spaces_dm'] = predict_df['value'].apply(lambda x: int(any(c.isspace() for c in x)))
+predict_df['has_special_chars_dm'] = predict_df['value'].apply(lambda x: int(bool(re.search('[^a-zA-Z0-9\s]', x))))
+
+predict_df['is_numeric_re'] = predict_df['value'].apply(lambda x: int(bool(re.match('^\d+$', x))))
+predict_df['is_alphabetic_re'] = predict_df['value'].apply(lambda x: int(bool(re.match('^[a-zA-Z]+$', x))))
+predict_df['is_alphanumeric_re'] = predict_df['value'].apply(lambda x: int(bool(re.match('^[a-zA-Z0-9]+$', x))))
+predict_df['has_hyphen_re'] = predict_df['value'].apply(lambda x: int(bool(re.search('-', x))))
+predict_df['has_letters_re'] = predict_df['value'].apply(lambda x: int(bool(re.search('[a-zA-Z]', x))))
+predict_df['has_numbers_re'] = predict_df['value'].apply(lambda x: int(bool(re.search('[0-9]', x))))
+predict_df['has_spaces_re'] = predict_df['value'].apply(lambda x: int(bool(re.search('\s', x))))
+predict_df['has_special_chars_re'] = predict_df['value'].apply(lambda x: int(bool(re.search('[^a-zA-Z0-9\s]', x))))
+predict_df['is_exactly_3_digits'] = predict_df['value'].apply(lambda x: int(bool(re.match('^\d{3}$', x))))
+
+# Select features for prediction
+X_input = predict_df[[
+    'length', 
+    'is_numeric_dm', 'is_alphabetic_dm', 'is_alphanumeric_dm', 'has_hyphen_dm', 'has_letters_dm', 'has_numbers_dm', 'has_spaces_dm', 'has_special_chars_dm',
+    'is_numeric_re', 'is_alphabetic_re', 'is_alphanumeric_re', 'has_hyphen_re', 'has_letters_re', 'has_numbers_re', 'has_spaces_re', 'has_special_chars_re',
+    'is_exactly_3_digits'
+]]
+
+# Make predictions with the TensorFlow model
+rf_predictions = model.predict(X_input)
+rf_predictions = tf.argmax(rf_predictions, axis=1).numpy()
+
+# Decode label predictions
+predicted_labels = le.inverse_transform(rf_predictions)
+
+# Print prediction results
+for value, label in zip(data_to_predict, predicted_labels):
+    print(f"Input Data: {value} -> Prediction: {label}")
