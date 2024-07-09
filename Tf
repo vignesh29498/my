@@ -150,3 +150,56 @@ predicted_labels = le.inverse_transform(rf_predictions)
 # Print prediction results
 for value, label in zip(data_to_predict, predicted_labels):
     print(f"Input Data: {value} -> Prediction: {label}")
+
+
+
+
+
+
+
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import Adam
+
+# Assuming `X_train`, `X_test`, `y_train`, and `y_test` are already defined from the previous steps
+
+# Define a stronger neural network model
+def build_strong_neural_network(input_dim):
+    model = Sequential()
+
+    # Input layer and first hidden layer with 128 neurons
+    model.add(Dense(128, input_dim=input_dim, activation='relu'))
+    model.add(Dropout(0.5))  # Dropout layer for regularization
+
+    # Second hidden layer with 128 neurons
+    model.add(Dense(128, activation='relu'))
+    model.add(Dropout(0.5))  # Dropout layer for regularization
+
+    # Third hidden layer with 64 neurons
+    model.add(Dense(64, activation='relu'))
+    model.add(Dropout(0.5))  # Dropout layer for regularization
+
+    # Output layer with softmax activation (assuming multi-class classification)
+    model.add(Dense(len(le.classes_), activation='softmax'))
+
+    # Compile the model with the Adam optimizer and sparse categorical cross-entropy loss
+    model.compile(optimizer=Adam(learning_rate=0.001),
+                  loss='sparse_categorical_crossentropy',
+                  metrics=['accuracy'])
+
+    return model
+
+# Build the model
+input_dim = X_train.shape[1]
+strong_nn_model = build_strong_neural_network(input_dim)
+
+# Train the model
+history = strong_nn_model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test))
+
+# Evaluate the model
+nn_accuracy = strong_nn_model.evaluate(X_test, y_test)[1]
+print(f"Neural Network Accuracy: {nn_accuracy}")
+
+# Save the model
+strong_nn_model.save('strong_nn_model.h5')
