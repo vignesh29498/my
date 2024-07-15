@@ -15,26 +15,23 @@ def predict_data_type(col):
     else:
         return 'mixed'
 
-# Initialize dictionaries to store results
-column_data_types = {}
-column_value_lengths = {}
+# Initialize lists to store results
+output_data = []
 columns_with_similar_values = []
 
 # Analyze each column
 for col in df.columns:
-    column_data_types[col] = predict_data_type(df[col])
-    column_value_lengths[col] = df[col].apply(lambda x: len(str(x)) if pd.notnull(x) else 0).tolist()
+    col_data_type = predict_data_type(df[col])
+    for value in df[col]:
+        value_length = len(str(value)) if pd.notnull(value) else 0
+        output_data.append(f"{col_data_type},{value_length}")
     if df[col].nunique() == 1:
         columns_with_similar_values.append(col)
 
 # Print results
-print("Column Data Types:")
-for col, dtype in column_data_types.items():
-    print(f"{col}: {dtype}")
-
-print("\nColumn Value Lengths:")
-for col, lengths in column_value_lengths.items():
-    print(f"{col}: {lengths[:5]}")  # Displaying first 5 lengths for brevity
+print("Column Data Types and Lengths:")
+for data in output_data[:50]:  # Displaying first 50 results for brevity
+    print(data)
 
 print("\nColumns with All Similar Values:")
 for col in columns_with_similar_values:
