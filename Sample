@@ -1,103 +1,41 @@
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import make_pipeline
-import os
-import joblib
 
-def train_model(label_file):
-    labels = pd.read_csv(label_file)
+# Load the CSV file
+file_path = 'your_file.csv'  # Replace with your CSV file path
+df = pd.read_csv(file_path)
 
-    for idx, row in labels.iterrows():
-        handoff_file = row['Handoff_File']
-        icd_file = row['ICD_File']
-        handoff_columns = row['Handoff_Columns'].split()
-        icd_columns = row['ICD_Columns'].split()
+# Function to predict data type of a column
+def predict_data_type(col):
+    if col.apply(lambda x: isinstance(x, int)).all():
+        return 'int'
+    elif col.apply(lambda x: isinstance(x, float)).all():
+        return 'float'
+    elif col.apply(lambda x: isinstance(x, str)).all():
+        return 'string'
+    else:
+        return 'mixed'
 
-        # Load Handoff data
-        handoff_data = pd.read_csv(f'AIML/Handoff/{handoff_file}', usecols=handoff_columns)
-        handoff_data.fillna(0, inplace=True)  # Assuming missing values should be treated as 0
-        
-        # Load ICD data
-        icd_data = pd.read_csv(f'AIML/ICD/{icd_file}', usecols=icd_columns)
-        icd_data.fillna(0, inplace=True)  # Assuming missing values should be treated as 0
+# Initialize dictionaries to store results
+column_data_types = {}
+column_value_lengths = {}
+columns_with_similar_values = []
 
-        # Ensure Text_ID columns are of the same type
-        handoff_data['Text_ID'] = handoff_data['Text_ID'].astype(str)
-        icd_data['Text_ID'] = icd_data['Text_ID'].astype(str)
+# Analyze each column
+for col in df.columns:
+    column_data_types[col] = predict_data_type(df[col])
+    column_value_lengths[col] = df[col].apply(lambda x: len(str(x)) if pd.notnull(x) else 0).tolist()
+    if df[col].nunique() == 1:
+        columns_with_similar_values.append(col)
 
-        print(f"Loaded {handoff_file} with columns: {handoff_data.columns}")
-        print(f"Loaded {icd_file} with columns: {icd_data.columns}")
+# Print results
+print("Column Data Types:")
+for col, dtype in column_data_types.items():
+    print(f"{col}: {dtype}")
 
-        # Create a combined DataFrame for training
-        combined_data = handoff_data.merge(icd_data, on='Text_ID')
+print("\nColumn Value Lengths:")
+for col, lengths in column_value_lengths.items():
+    print(f"{col}: {lengths[:5]}")  # Displaying first 5 lengths for brevity
 
-        if combined_data.empty:
-            print(f"No matching data found for {handoff_file} and {icd_file}. Skipping.")
-            continue
-
-        # Prepare the training data
-        X = combined_data[handoff_columns[1:]]
-        y = combined_data.drop(columns=['Text_ID'] + handoff_columns[1:])
-
-        for column in y.columns:
-            model = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000))
-            model.fit(X, y[column])
-
-            # Save the model
-            model_filename = f'model_{handoff_file.split(".")[0]}_{column}.pkl'
-            joblib.dump(model, model_filename)
-            print(f'Saved model to {model_filename}')
-
-def predict_meanings(label_file, new_raw_file, output_file):
-    labels = pd.read_csv(label_file)
-    handoff_columns = None
-    icd_file = None
-    icd_columns = None
-
-    for idx, row in labels.iterrows():
-        if row['Handoff_File'] == os.path.basename(new_raw_file):
-            handoff_columns = row['Handoff_Columns'].split()
-            icd_file = row['ICD_File']
-            icd_columns = row['ICD_Columns'].split()
-            break
-
-    if handoff_columns is None:
-        raise ValueError("No matching entry found in the label file for the provided new_raw_file.")
-
-    new_data = pd.read_csv(new_raw_file, usecols=handoff_columns)
-    new_data.fillna(0, inplace=True)  # Assuming missing values should be treated as 0
-
-    if new_data.empty:
-        raise ValueError("The new raw file has no data.")
-
-    predictions = pd.DataFrame(new_data['Text_ID'])
-
-    for column in icd_columns[1:]:
-        model_filename = f'model_{os.path.basename(new_raw_file).split(".")[0]}_{column}.pkl'
-        if not os.path.exists(model_filename):
-            raise ValueError(f"Model file {model_filename} does not exist.")
-
-        model = joblib.load(model_filename)
-        predictions[column] = model.predict(new_data[handoff_columns[1:]])
-
-    icd_data = pd.read_csv(f'AIML/ICD/{icd_file}', usecols=icd_columns)
-    icd_data = icd_data[icd_columns]  # Keep only the relevant columns
-
-    # Ensure Text_ID columns are of the same type
-    predictions['Text_ID'] = predictions['Text_ID'].astype(str)
-    icd_data['Text_ID'] = icd_data['Text_ID'].astype(str)
-
-    result = predictions.merge(icd_data, on='Text_ID', how='inner')
-
-    if result.empty:
-        raise ValueError("No matching Text_IDs found between predictions and ICD data.")
-
-    result = result[icd_columns]  # Only keep ICD columns
-
-    result.to_csv(output_file, index=False)
-    print(f'Saved predictions to {output_file}')
-
-# Example usage
-# train_model('label_file.csv')
-# predict_meanings('label_file.csv', 'AIML/Handoff/handoff_1.csv', 'predicted_output.csv')
+print("\nColumns with All Similar Values:")
+for col in columns_with_similar_values:
+    print(col)
