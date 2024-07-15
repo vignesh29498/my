@@ -6,6 +6,7 @@ df = pd.read_csv(file_path)
 
 # Function to predict data type of a column
 def predict_data_type(col):
+    col = col.dropna()
     if col.apply(lambda x: isinstance(x, int)).all():
         return 'int'
     elif col.apply(lambda x: isinstance(x, float)).all():
@@ -22,11 +23,15 @@ columns_with_similar_values = []
 # Analyze each column
 for col in df.columns:
     col_data_type = predict_data_type(df[col])
+    
+    # Check if all values in the column are the same
+    if df[col].nunique() == 1:
+        columns_with_similar_values.append(col)
+    
+    # Process each value in the column
     for value in df[col]:
         value_length = len(str(value)) if pd.notnull(value) else 0
         output_data.append(f"{col_data_type},{value_length}")
-    if df[col].nunique() == 1:
-        columns_with_similar_values.append(col)
 
 # Print results
 print("Column Data Types and Lengths:")
