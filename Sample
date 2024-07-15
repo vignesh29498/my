@@ -16,9 +16,25 @@ def predict_data_type(col):
     else:
         return 'mixed'
 
+# Function to get additional column analysis
+def additional_analysis(col):
+    analysis = {}
+    if col.apply(lambda x: isinstance(x, int) or isinstance(x, float)).all():
+        analysis['min'] = col.min()
+        analysis['max'] = col.max()
+        analysis['mean'] = col.mean()
+        analysis['median'] = col.median()
+        analysis['std'] = col.std()
+    elif col.apply(lambda x: isinstance(x, str)).all():
+        analysis['most_frequent'] = col.mode().iloc[0] if not col.mode().empty else None
+        analysis['lengths'] = col.apply(lambda x: len(str(x)) if pd.notnull(x) else 0).tolist()
+        analysis['contains_special_chars'] = col.apply(lambda x: any(not c.isalnum() for c in str(x)) if pd.notnull(x) else False).any()
+    return analysis
+
 # Initialize lists to store results
 output_data = []
 columns_with_similar_values = []
+additional_info = {}
 
 # Analyze each column
 for col in df.columns:
@@ -32,6 +48,9 @@ for col in df.columns:
     for value in df[col]:
         value_length = len(str(value)) if pd.notnull(value) else 0
         output_data.append(f"{col_data_type},{value_length}")
+    
+    # Get additional analysis for the column
+    additional_info[col] = additional_analysis(df[col])
 
 # Print results
 print("Column Data Types and Lengths:")
@@ -41,3 +60,9 @@ for data in output_data[:50]:  # Displaying first 50 results for brevity
 print("\nColumns with All Similar Values:")
 for col in columns_with_similar_values:
     print(col)
+
+print("\nAdditional Analysis:")
+for col, analysis in additional_info.items():
+    print(f"\n{col}:")
+    for key, value in analysis.items():
+        print(f"  {key}: {value}")
