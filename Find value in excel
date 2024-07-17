@@ -30,3 +30,31 @@ for value, cols in columns.items():
         print(f"Value '{value}' found in columns: {', '.join(cols)}")
     else:
         print(f"Value '{value}' not found in any column")
+
+
+
+import pandas as pd
+
+def remove_duplicates_in_csv(input_file_path, output_file_path):
+    # Read the CSV file into a DataFrame
+    try:
+        df = pd.read_csv(input_file_path)
+    except Exception as e:
+        print(f"Error reading the CSV file: {e}")
+        return
+    
+    # Remove duplicate values in each column
+    df_cleaned = df.apply(lambda x: pd.Series(x.unique()), axis=0)
+    
+    # Save the cleaned DataFrame to a new CSV file
+    try:
+        df_cleaned.to_csv(output_file_path, index=False)
+        print(f"Successfully saved the cleaned CSV file to {output_file_path}")
+    except Exception as e:
+        print(f"Error writing the cleaned CSV file: {e}")
+
+# Example usage
+input_csv_file_path = 'path/to/your/input_file.csv'
+output_csv_file_path = 'path/to/your/output_file.csv'
+
+remove_duplicates_in_csv(input_csv_file_path, output_csv_file_path)
