@@ -58,3 +58,43 @@ input_csv_file_path = 'path/to/your/input_file.csv'
 output_csv_file_path = 'path/to/your/output_file.csv'
 
 remove_duplicates_in_csv(input_csv_file_path, output_csv_file_path)
+
+
+
+
+
+
+
+import pandas as pd
+
+def find_values_in_csv(file_path, values_to_find):
+    # Read the CSV file into a DataFrame
+    try:
+        df = pd.read_csv(file_path)
+    except Exception as e:
+        print(f"Error reading the CSV file: {e}")
+        return {}
+    
+    # Dictionary to store the columns where each value is found
+    columns_with_values = {value: [] for value in values_to_find}
+    
+    # Find the columns where each value is present
+    for column in df.columns:
+        column_data = df[column].dropna().astype(str)  # Ensure all data is string type
+        for value in values_to_find:
+            if value in column_data.values:
+                columns_with_values[value].append(column)
+    
+    return columns_with_values
+
+# Example usage
+csv_file_path = 'path/to/your/cleaned_file.csv'
+values = ['value1', 'value2', 'value3']  # List of values to search for
+
+columns = find_values_in_csv(csv_file_path, values)
+
+for value, cols in columns.items():
+    if cols:
+        print(f"Value '{value}' found in columns: {', '.join(cols)}")
+    else:
+        print(f"Value '{value}' not found in any column")
