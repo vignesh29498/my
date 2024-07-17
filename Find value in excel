@@ -1,0 +1,28 @@
+import pandas as pd
+
+def find_value_in_csv(file_path, value_to_find):
+    # Read the CSV file into a DataFrame
+    try:
+        df = pd.read_csv(file_path)
+    except Exception as e:
+        print(f"Error reading the CSV file: {e}")
+        return []
+    
+    # Find the columns where the value is present
+    columns_with_value = []
+    for column in df.columns:
+        if df[column].eq(value_to_find).any():
+            columns_with_value.append(column)
+    
+    return columns_with_value
+
+# Example usage
+csv_file_path = 'path/to/your/file.csv'
+value = 'your_value_to_search'
+
+columns = find_value_in_csv(csv_file_path, value)
+
+if columns:
+    print(f"Value '{value}' found in columns: {', '.join(columns)}")
+else:
+    print(f"Value '{value}' not found in any column")
