@@ -56,3 +56,44 @@ values_to_search = ['0.2', '27065500 CR04', '24059400 OD03']  # Replace with you
 columns = find_columns(values_to_search)
 for value, column in columns.items():
     print(f"The value '{value}' is found in the column: {column}")
+
+
+
+
+import pandas as pd
+
+# Load the dataset with a specified encoding
+try:
+    df = pd.read_csv('your_dataset.csv', encoding='utf-8')
+except UnicodeDecodeError:
+    try:
+        df = pd.read_csv('your_dataset.csv', encoding='latin1')
+    except UnicodeDecodeError:
+        df = pd.read_csv('your_dataset.csv', encoding='iso-8859-1')
+
+def find_columns(values):
+    found_values = []
+    not_found_values = []
+    for value in values:
+        found = False
+        for column in df.columns:
+            if df[column].astype(str).str.contains(str(value)).any():
+                found_values.append((value, column))
+                found = True
+                break
+        if not found:
+            not_found_values.append(value)
+    return found_values, not_found_values
+
+# Example usage
+values_to_search = ['0.2', '27065500 CR04', '24059400 OD03']  # Replace with your list of values
+found_values, not_found_values = find_columns(values_to_search)
+
+# Print results
+print("Found values and their columns:")
+for value, column in found_values:
+    print(f"The value '{value}' is found in the column: {column}")
+
+print("\nNot found values:")
+for value in not_found_values:
+    print(f"The value '{value}' is not found in any column.")
