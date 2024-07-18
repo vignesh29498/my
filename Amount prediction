@@ -98,3 +98,56 @@ input_values = [1000, 265, 1.2, 564]  # Replace with your input list
 predicted_columns = predict_column_names(input_values)
 
 print(f'Predicted columns: {predicted_columns}')
+
+
+
+
+
+
+
+
+
+
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestClassifier
+import numpy as np
+
+# Load the CSV file
+data = pd.read_csv('data.csv')
+
+# Melt the DataFrame to get a format suitable for training
+melted_data = data.melt(var_name='column', value_name='value')
+
+# Encode the column names as integers
+le = LabelEncoder()
+melted_data['column_encoded'] = le.fit_transform(melted_data['column'])
+
+# Prepare the features (values) and labels (encoded column names)
+X = melted_data['value'].values.reshape(-1, 1)
+y = melted_data['column_encoded']
+
+# Initialize and train the model
+model = RandomForestClassifier()
+model.fit(X, y)
+
+
+
+
+
+def predict_column(values):
+    # Ensure the input is a NumPy array
+    values = np.array(values).reshape(-1, 1)
+    
+    # Predict the encoded column names
+    encoded_preds = model.predict(values)
+    
+    # Decode the column names
+    column_preds = le.inverse_transform(encoded_preds)
+    
+    return column_preds
+
+# Example usage
+input_values = [1, 6, 11]  # Replace with your own input values
+predicted_columns = predict_column(input_values)
+print(predicted_columns)
