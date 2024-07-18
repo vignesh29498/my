@@ -97,3 +97,44 @@ for value, column in found_values:
 print("\nNot found values:")
 for value in not_found_values:
     print(f"The value '{value}' is not found in any column.")
+
+
+
+
+
+
+import pandas as pd
+
+# Load the dataset with a specified encoding
+try:
+    df = pd.read_csv('your_dataset.csv', encoding='utf-8')
+except UnicodeDecodeError:
+    try:
+        df = pd.read_csv('your_dataset.csv', encoding='latin1')
+    except UnicodeDecodeError:
+        df = pd.read_csv('your_dataset.csv', encoding='iso-8859-1')
+
+# Lists to store strings, floats, and integers
+string_values = []
+float_values = []
+int_values = []
+
+# Iterate over each column and check the type of the first non-null value
+for column in df.columns:
+    sample_value = df[column].dropna().iloc[0]  # Take the first non-null value from the column
+    try:
+        float_value = float(sample_value)
+        if float_value.is_integer():
+            int_values.append(int(float_value))
+        else:
+            float_values.append(float_value)
+    except ValueError:
+        string_values.append(str(sample_value))
+
+# Print results
+print("String values:")
+print(string_values)
+print("\nInteger values:")
+print(int_values)
+print("\nFloat values:")
+print(float_values)
