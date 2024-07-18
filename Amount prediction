@@ -1,0 +1,100 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+import numpy as np
+
+# Read the CSV file
+df = pd.read_csv('/content/Book1.csv')
+
+# Handle NaN values by imputing with the median of each column
+imputer = SimpleImputer(strategy='median')
+df_imputed = pd.DataFrame(imputer.fit_transform(df), columns=df.columns)
+
+# Feature engineering: add mean, median, and std for each row
+def add_row_statistics(X):
+    mean = np.mean(X, axis=1).reshape(-1, 1)
+    median = np.median(X, axis=1).reshape(-1, 1)
+    std = np.std(X, axis=1).reshape(-1, 1)
+    return np.hstack((X, mean, median, std))
+
+# Prepare the dataset
+X = df_imputed.values
+X_with_stats = add_row_statistics(X)
+
+# Create a flattened list of target column names for each value in each row
+target = []
+for col in df_imputed.columns:
+    target.extend([col] * df_imputed.shape[0])
+
+# Ensure target has the same length as the flattened feature matrix
+flattened_length = X.shape[0] * X.shape[1]
+if len(target) != flattened_length:
+    raise ValueError(f"Inconsistent number of samples: {len(target)} targets vs {flattened_length} features.")
+
+# Flatten the feature matrix and the statistics matrix
+X_flattened = X.flatten().reshape(-1, 1)
+X_with_stats_flattened = X_with_stats.reshape(-1, X_with_stats.shape[1])
+
+# Concatenate the original flattened features with the statistics features
+X_combined = np.hstack((X_flattened, np.tile(X_with_stats_flattened, (X_flattened.shape[0] // X_with_stats_flattened.shape[0], 1))))
+
+# Label encode the target
+le = LabelEncoder()
+y = le.fit_transform(target)
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X_combined, y, test_size=0.2, random_state=42)
+
+# Model pipeline
+model = Pipeline([
+    ('classifier', RandomForestClassifier(n_estimators=100, random_state=42))
+])
+
+# Cross-validation for model evaluation
+cv_scores = cross_val_score(model, X_train, y_train, cv=5)
+print(f'Cross-validation accuracy: {np.mean(cv_scores)}')
+
+# Train the model
+model.fit(X_train, y_train)
+
+# Predict on the test set
+predictions = model.predict(X_test)
+
+# Decode the predictions
+predicted_columns = le.inverse_transform(predictions)
+
+# Evaluate the model
+accuracy = model.score(X_test, y_test)
+print(f'Test set accuracy: {accuracy}')
+
+# Function to predict column names for a given list of values
+def predict_column_names(values):
+    # Convert the list to a DataFrame and handle NaN values
+    input_df = pd.DataFrame([values])
+    input_df_imputed = pd.DataFrame(imputer.transform(input_df), columns=df.columns)
+    
+    # Add row statistics
+    input_values_with_stats = add_row_statistics(input_df_imputed.values)
+    
+    # Flatten the input values
+    input_values_flattened = input_df_imputed.values.flatten().reshape(-1, 1)
+    input_values_with_stats_flattened = input_values_with_stats.reshape(-1, input_values_with_stats.shape[1])
+    
+    # Concatenate the original flattened features with the statistics features
+    input_combined = np.hstack((input_values_flattened, np.tile(input_values_with_stats_flattened, (input_values_flattened.shape[0] // input_values_with_stats_flattened.shape[0], 1))))
+    
+    # Predict column names
+    predictions = model.predict(input_combined)
+    
+    # Decode the predictions to column names
+    predicted_columns = le.inverse_transform(predictions)
+    return predicted_columns
+
+# Example usage
+input_values = [1000, 265, 1.2, 564]  # Replace with your input list
+predicted_columns = predict_column_names(input_values)
+
+print(f'Predicted columns: {predicted_columns}')
