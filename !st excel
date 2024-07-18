@@ -30,3 +30,29 @@ results = find_numbers(numbers_to_find)
 # Print results
 for number, result in results.items():
     print(f"Number: {number}, Found in column: {result}")
+
+
+
+import pandas as pd
+
+# Load the dataset (replace 'your_dataset.csv' with the actual file path)
+df = pd.read_csv('your_dataset.csv')
+
+def find_columns(values):
+    result = {}
+    for value in values:
+        found = False
+        for column in df.columns:
+            if df[column].astype(str).str.contains(str(value)).any():
+                result[value] = column
+                found = True
+                break
+        if not found:
+            result[value] = "Value not found"
+    return result
+
+# Example usage
+values_to_search = ['0.2', '27065500 CR04', '24059400 OD03']  # Replace with your list of values
+columns = find_columns(values_to_search)
+for value, column in columns.items():
+    print(f"The value '{value}' is found in the column: {column}")
