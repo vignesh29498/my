@@ -1,0 +1,32 @@
+import pandas as pd
+
+# Step 1: Read the data from Excel CSV file into a pandas DataFrame
+file_path = 'your_data.csv'  # Replace with your file path
+df = pd.read_csv(file_path)
+
+# Step 2: Function to find list of numbers and retrieve row 1 column value for each
+def find_numbers(numbers_list):
+    results = {}
+    for number in numbers_list:
+        found = False
+        # Iterate through each cell in the DataFrame
+        for index, row in df.iterrows():
+            for col in df.columns:
+                cell_value = str(row[col])  # Convert to string to handle non-string data types
+                if str(number) == cell_value:
+                    results[number] = row.iloc[0]  # Store the value from row 1 for the number
+                    found = True
+                    break
+            if found:
+                break
+        if not found:
+            results[number] = "No match found"  # If number is not found, indicate no match
+    return results
+
+# Example usage with a list of numbers
+numbers_to_find = ['9586867657', '12345', '555-1234']  # Replace with your list of numbers
+results = find_numbers(numbers_to_find)
+
+# Print results
+for number, result in results.items():
+    print(f"Number: {number}, Found in column: {result}")
