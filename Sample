@@ -1,68 +1,21 @@
-import pandas as pd
+def remove_common_values(list1, *other_lists):
+  """Removes values from list1 that are present in any of the other_lists.
 
-# Load the CSV file
-file_path = 'your_file.csv'  # Replace with your CSV file path
-df = pd.read_csv(file_path)
+  Args:
+      list1: The list from which to remove values.
+      *other_lists: A variable number of lists to compare against list1.
 
-# Function to predict data type of a column
-def predict_data_type(col):
-    col = col.dropna()
-    if col.apply(lambda x: isinstance(x, int)).all():
-        return 'int'
-    elif col.apply(lambda x: isinstance(x, float)).all():
-        return 'float'
-    elif col.apply(lambda x: isinstance(x, str)).all():
-        return 'string'
-    else:
-        return 'mixed'
+  Returns:
+      A new list containing elements from list1 that are not present in any of the other_lists.
+  """
 
-# Function to get additional column analysis
-def additional_analysis(col):
-    analysis = {}
-    if col.apply(lambda x: isinstance(x, int) or isinstance(x, float)).all():
-        analysis['min'] = col.min()
-        analysis['max'] = col.max()
-        analysis['mean'] = col.mean()
-        analysis['median'] = col.median()
-        analysis['std'] = col.std()
-    elif col.apply(lambda x: isinstance(x, str)).all():
-        analysis['most_frequent'] = col.mode().iloc[0] if not col.mode().empty else None
-        analysis['lengths'] = col.apply(lambda x: len(str(x)) if pd.notnull(x) else 0).tolist()
-        analysis['contains_special_chars'] = col.apply(lambda x: any(not c.isalnum() for c in str(x)) if pd.notnull(x) else False).any()
-    return analysis
+  all_values = set(list1 + [*other_lists])  # Combine all lists into a set
+  return [x for x in list1 if x not in all_values - set(list1)]  # Filter list1 based on combined set
 
-# Initialize lists to store results
-output_data = []
-columns_with_similar_values = []
-additional_info = {}
+# Example usage
+list1 = ["a", "b", "c"]
+list2 = ["hdh", "b", "ghjd"]
+list3 = ["a", "jdj", "jdj", "jdj", "c"]
 
-# Analyze each column
-for col in df.columns:
-    col_data_type = predict_data_type(df[col])
-    
-    # Check if all values in the column are the same
-    if df[col].nunique() == 1:
-        columns_with_similar_values.append(col)
-    
-    # Process each value in the column
-    for value in df[col]:
-        value_length = len(str(value)) if pd.notnull(value) else 0
-        output_data.append(f"{col_data_type},{value_length}")
-    
-    # Get additional analysis for the column
-    additional_info[col] = additional_analysis(df[col])
-
-# Print results
-print("Column Data Types and Lengths:")
-for data in output_data[:50]:  # Displaying first 50 results for brevity
-    print(data)
-
-print("\nColumns with All Similar Values:")
-for col in columns_with_similar_values:
-    print(col)
-
-print("\nAdditional Analysis:")
-for col, analysis in additional_info.items():
-    print(f"\n{col}:")
-    for key, value in analysis.items():
-        print(f"  {key}: {value}")
+filtered_list1 = remove_common_values(list1, list2, list3)
+print(filtered_list1)  # Output: [] (empty list)
