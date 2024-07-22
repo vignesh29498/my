@@ -1,35 +1,53 @@
-import os
 import pandas as pd
 
-def read_csv_files(folder_path):
-    csv_files = [f for f in os.listdir(folder_path) if f.endswith('.csv')]
-    dataframes = []
-    for file in csv_files:
-        df = pd.read_csv(os.path.join(folder_path, file))
-        dataframes.append(df)
-    return dataframes
+def read_csv(file_path):
+    return pd.read_csv(file_path)
 
-def remove_duplicates(dataframes):
-    unique_dfs = []
-    for df in dataframes:
-        unique_df = df.apply(lambda col: col.drop_duplicates().reset_index(drop=True))
-        unique_dfs.append(unique_df)
-    return unique_dfs
+def compare_rows(df1, df2, sample_index):
+    sample_row = df1.iloc[sample_index]
+    matched_data = []
+    unmatched_data = []
 
-def consolidate_data(dataframes):
-    consolidated_df = pd.concat(dataframes, axis=0, ignore_index=True)
-    consolidated_df = consolidated_df.apply(lambda col: col.drop_duplicates().reset_index(drop=True))
-    return consolidated_df
+    for col in df1.columns:
+        if col in df2.columns:
+            if sample_row[col] in df2[col].values:
+                match_value = df2[df2[col] == sample_row[col]][col].values
+                matched_data.append((col, sample_row[col], match_value))
+            else:
+                unmatched_data.append((col, sample_row[col]))
+        else:
+            unmatched_data.append((col, sample_row[col]))
 
-def write_final_csv(consolidated_df, output_path):
-    consolidated_df.to_csv(output_path, index=False)
+    return matched_data, unmatched_data
 
-# Specify the folder path and output file path
-folder_path = 'path_to_folder_with_csv_files'
-output_path = 'path_to_final_output_file/final.csv'
+def process_files(file1_path, file2_path, sample_index):
+    df1 = read_csv(file1_path)
+    df2 = read_csv(file2_path)
 
-# Process the CSV files
-dataframes = read_csv_files(folder_path)
-unique_dfs = remove_duplicates(dataframes)
-consolidated_df = consolidate_data(unique_dfs)
-write_final_csv(consolidated_df, output_path)
+    matched_data, unmatched_data = compare_rows(df1, df2, sample_index)
+
+    return matched_data, unmatched_data
+
+def main():
+    file1_path = 'path_to_first_csv_file.csv'
+    file2_path = 'path_to_second_csv_file.csv'
+    sample_index = 0  # Change this to the index of the sample row you want to process
+
+    matched_data, unmatched_data = process_files(file1_path, file2_path, sample_index)
+
+    if matched_data:
+        print("Matched Data:")
+        for col, value, match_values in matched_data:
+            print(f"Column: {col}, Value: {value}, Matches in second file: {match_values}")
+    else:
+        print("No matches found.")
+
+    if unmatched_data:
+        print("\nUnmatched Data:")
+        for col, value in unmatched_data:
+            print(f"Column: {col}, Value: {value}")
+    else:
+        print("All values matched.")
+
+if __name__ == "__main__":
+    main()
