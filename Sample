@@ -21,7 +21,8 @@ def get_sample_row(df, sample_index=None):
     if sample_index is not None:
         sample_row = df.iloc[sample_index]
     else:
-        sample_row = df.sample(n=1).iloc[0]
+        random_index = random.randint(0, len(df) - 1)  # Select a random index
+        sample_row = df.iloc[random_index]
     return sample_row
 
 def process_files(file1_path, file2_path, sample_index=None):
