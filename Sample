@@ -1,61 +1,50 @@
 import pandas as pd
-import random
 
-def read_csv(file_path):
-    return pd.read_csv(file_path)
+# Path to your CSV file
+output_csv_file_path = 'your_file.csv'
 
-def find_matches(sample_row, df2):
-    matched_data = []
-    unmatched_data = []
+# Read the CSV file
+df = pd.read_csv(output_csv_file_path)
 
-    for col in sample_row.index:
-        value = sample_row[col]
-        if any(df2.apply(lambda row: value in row.values, axis=1)):
-            matched_data.append((col, value))
-        else:
-            unmatched_data.append((col, value))
-    
-    return matched_data, unmatched_data
+# Remove columns with empty names
+df = df.loc[:, df.columns.str.strip() != '']
 
-def get_sample_row(df, sample_index=None):
-    if sample_index is not None:
-        sample_row = df.iloc[sample_index]
-    else:
-        random_index = random.randint(0, len(df) - 1)  # Select a random index
-        sample_row = df.iloc[random_index]
-    return sample_row
+# Save the cleaned DataFrame to a new CSV file
+df.to_csv('cleaned_file.csv', index=False)
 
-def process_files(file1_path, file2_path, sample_index=None):
-    df1 = read_csv(file1_path)
-    df2 = read_csv(file2_path)
-    sample_row = get_sample_row(df1, sample_index)
+# Initialize lists to store different types of values
+string_values = []
+float_values = []
+int_values = []
 
-    matched_data, unmatched_data = find_matches(sample_row, df2)
+# Check if the DataFrame has at least two rows
+if len(df) > 1:
+    # Take the second row as the sample
+    sample_row = df.iloc[1]
 
-    return matched_data, unmatched_data
+    # Iterate over each value in the second row
+    for value in sample_row:
+        value = str(value).strip()  # Ensure the value is a string, stripping any whitespace
+        try:
+            float_value = float(value)
+            if float_value.is_integer():
+                int_values.append(int(float_value))
+            else:
+                float_values.append(float_value)
+        except ValueError:
+            string_values.append(value)
 
-def main():
-    file1_path = 'path_to_first_csv_file.csv'
-    file2_path = 'path_to_second_csv_file.csv'
-    
-    # Set to None to take a random sample row or specify the sample row index
-    sample_index = None  # Change to a specific index if you want to use a specific row
+    # Print results
+    print("String values:")
+    print(string_values)
+    print(type(string_values))
 
-    matched_data, unmatched_data = process_files(file1_path, file2_path, sample_index)
+    print("\nInteger values:")
+    print(int_values)
+    print(type(int_values))
 
-    if matched_data:
-        print("Matched Data:")
-        for col, value in matched_data:
-            print(f"Column: {col}, Value: {value}")
-    else:
-        print("No matches found.")
-
-    if unmatched_data:
-        print("\nUnmatched Data:")
-        for col, value in unmatched_data:
-            print(f"Column: {col}, Value: {value}")
-    else:
-        print("All values matched.")
-
-if __name__ == "__main__":
-    main()
+    print("\nFloat values:")
+    print(float_values)
+    print(type(float_values))
+else:
+    print("The DataFrame doesn't have enough rows.")
