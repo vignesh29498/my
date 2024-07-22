@@ -1,21 +1,35 @@
-def remove_common_values(list1, *other_lists):
-  """Removes values from list1 that are present in any of the other_lists.
+import os
+import pandas as pd
 
-  Args:
-      list1: The list from which to remove values.
-      *other_lists: A variable number of lists to compare against list1.
+def read_csv_files(folder_path):
+    csv_files = [f for f in os.listdir(folder_path) if f.endswith('.csv')]
+    dataframes = []
+    for file in csv_files:
+        df = pd.read_csv(os.path.join(folder_path, file))
+        dataframes.append(df)
+    return dataframes
 
-  Returns:
-      A new list containing elements from list1 that are not present in any of the other_lists.
-  """
+def remove_duplicates(dataframes):
+    unique_dfs = []
+    for df in dataframes:
+        unique_df = df.apply(lambda col: col.drop_duplicates().reset_index(drop=True))
+        unique_dfs.append(unique_df)
+    return unique_dfs
 
-  all_values = set(list1 + [*other_lists])  # Combine all lists into a set
-  return [x for x in list1 if x not in all_values - set(list1)]  # Filter list1 based on combined set
+def consolidate_data(dataframes):
+    consolidated_df = pd.concat(dataframes, axis=0, ignore_index=True)
+    consolidated_df = consolidated_df.apply(lambda col: col.drop_duplicates().reset_index(drop=True))
+    return consolidated_df
 
-# Example usage
-list1 = ["a", "b", "c"]
-list2 = ["hdh", "b", "ghjd"]
-list3 = ["a", "jdj", "jdj", "jdj", "c"]
+def write_final_csv(consolidated_df, output_path):
+    consolidated_df.to_csv(output_path, index=False)
 
-filtered_list1 = remove_common_values(list1, list2, list3)
-print(filtered_list1)  # Output: [] (empty list)
+# Specify the folder path and output file path
+folder_path = 'path_to_folder_with_csv_files'
+output_path = 'path_to_final_output_file/final.csv'
+
+# Process the CSV files
+dataframes = read_csv_files(folder_path)
+unique_dfs = remove_duplicates(dataframes)
+consolidated_df = consolidate_data(unique_dfs)
+write_final_csv(consolidated_df, output_path)
