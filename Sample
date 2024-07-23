@@ -17,3 +17,21 @@ def remove_duplicates_deep(list_of_lists):
 list_of_lists = [[1, 2, 3], [4, 5, 3], [1, 2, 3], [7, 8, 9]]
 unique_list = remove_duplicates_deep(list_of_lists)
 print(unique_list)
+
+
+def remove_duplicates_deep_and_flatten(list_of_lists):
+    seen = set()
+    unique_list = []
+
+    for sublist in list_of_lists:
+        for item in sublist:
+            if item not in seen:
+                seen.add(item)
+                unique_list.append(item)
+
+    return unique_list
+
+# Example usage
+list_of_lists = [[1, 2, 3], [4, 5, 3], [1, 2, 3], [7, 8, 9]]
+unique_list = remove_duplicates_deep_and_flatten(list_of_lists)
+print(unique_list)
