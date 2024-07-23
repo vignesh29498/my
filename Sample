@@ -1,37 +1,26 @@
-def remove_duplicates_deep(list_of_lists):
-    seen = set()
-    unique_lists = []
+import pandas as pd
 
-    for sublist in list_of_lists:
-        unique_sublist = []
-        for item in sublist:
-            if item not in seen:
-                seen.add(item)
-                unique_sublist.append(item)
-        if unique_sublist:
-            unique_lists.append(unique_sublist)
+# Load the two CSV files
+file_before = 'path_to_file_before.csv'
+file_after = 'path_to_file_after.csv'
 
-    return unique_lists
+df_before = pd.read_csv(file_before)
+df_after = pd.read_csv(file_after)
 
-# Example usage
-list_of_lists = [[1, 2, 3], [4, 5, 3], [1, 2, 3], [7, 8, 9]]
-unique_list = remove_duplicates_deep(list_of_lists)
-print(unique_list)
+# Ensure the files have the same shape
+if df_before.shape != df_after.shape:
+    print("The two files have different shapes and cannot be compared directly.")
+else:
+    # Compare the two DataFrames and get the differences
+    comparison = df_before.compare(df_after)
 
-
-def remove_duplicates_deep_and_flatten(list_of_lists):
-    seen = set()
-    unique_list = []
-
-    for sublist in list_of_lists:
-        for item in sublist:
-            if item not in seen:
-                seen.add(item)
-                unique_list.append(item)
-
-    return unique_list
-
-# Example usage
-list_of_lists = [[1, 2, 3], [4, 5, 3], [1, 2, 3], [7, 8, 9]]
-unique_list = remove_duplicates_deep_and_flatten(list_of_lists)
-print(unique_list)
+    if comparison.empty:
+        print("All cells are the same in both files.")
+    else:
+        print("Changes found between the two files:")
+        for index, changes in comparison.iterrows():
+            for col in comparison.columns.levels[0]:
+                original = changes[(col, 'self')]
+                new = changes[(col, 'other')]
+                if not pd.isna(original) and not pd.isna(new):  # Check for NaN values
+                    print(f"Row {index}, Column '{col}': {original} -> {new}")
