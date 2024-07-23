@@ -1,29 +1,32 @@
-import pandas as pd
+import xml.etree.ElementTree as ET
 
-# Load the two CSV files
-file_before = 'path_to_file_before.csv'
-file_after = 'path_to_file_after.csv'
+def compare_xml(file1, file2):
+    # Parse XML files
+    tree1 = ET.parse(file1)
+    tree2 = ET.parse(file2)
+    
+    root1 = tree1.getroot()
+    root2 = tree2.getroot()
 
-df_before = pd.read_csv(file_before)
-df_after = pd.read_csv(file_after)
+    # Helper function to convert XML element to a dictionary
+    def element_to_dict(element):
+        return {child.tag: child.text for child in element}
 
-# Get the union of row indices and column names
-rows_before = set(df_before.index)
-rows_after = set(df_after.index)
-cols_before = set(df_before.columns)
-cols_after = set(df_after.columns)
+    # Convert roots to dictionaries
+    dict1 = element_to_dict(root1)
+    dict2 = element_to_dict(root2)
 
-all_rows = sorted(rows_before.union(rows_after))
-all_cols = sorted(cols_before.union(cols_after))
+    # Compare dictionaries
+    return dict1 == dict2
 
-# Compare cell by cell
-for row in all_rows:
-    for col in all_cols:
-        value_before = df_before.at[row, col] if row in df_before.index and col in df_before.columns else None
-        value_after = df_after.at[row, col] if row in df_after.index and col in df_after.columns else None
-        
-        if value_before != value_after:
-            print(f"Difference found at cell ({row}, {col}):")
-            print(f"File before change: {value_before}")
-            print(f"File after change: {value_after}")
-            print()  # Print a blank line for readability
+# File paths
+file1 = 'file1.xml'
+file2 = 'file2.xml'
+
+# Compare XML files
+if compare_xml(file1, file2):
+    print("XML files match.")
+else:
+    print("XML files do not match.")
+    # Optionally, print details of differences
+    print(f"Details of mismatch in {file1} and {file2}")
