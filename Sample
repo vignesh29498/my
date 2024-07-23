@@ -1,50 +1,15 @@
-import pandas as pd
+def remove_duplicates(list_of_lists):
+    seen = set()
+    unique_lists = []
+    for sublist in list_of_lists:
+        # Convert sublist to tuple for hashing
+        sublist_tuple = tuple(sublist)
+        if sublist_tuple not in seen:
+            seen.add(sublist_tuple)
+            unique_lists.append(sublist)
+    return unique_lists
 
-# Path to your CSV file
-output_csv_file_path = 'your_file.csv'
-
-# Read the CSV file
-df = pd.read_csv(output_csv_file_path)
-
-# Remove columns with empty names
-df = df.loc[:, df.columns.str.strip() != '']
-
-# Save the cleaned DataFrame to a new CSV file
-df.to_csv('cleaned_file.csv', index=False)
-
-# Initialize lists to store different types of values
-string_values = []
-float_values = []
-int_values = []
-
-# Check if the DataFrame has at least two rows
-if len(df) > 1:
-    # Take the second row as the sample
-    sample_row = df.iloc[1]
-
-    # Iterate over each value in the second row
-    for value in sample_row:
-        value = str(value).strip()  # Ensure the value is a string, stripping any whitespace
-        try:
-            float_value = float(value)
-            if float_value.is_integer():
-                int_values.append(int(float_value))
-            else:
-                float_values.append(float_value)
-        except ValueError:
-            string_values.append(value)
-
-    # Print results
-    print("String values:")
-    print(string_values)
-    print(type(string_values))
-
-    print("\nInteger values:")
-    print(int_values)
-    print(type(int_values))
-
-    print("\nFloat values:")
-    print(float_values)
-    print(type(float_values))
-else:
-    print("The DataFrame doesn't have enough rows.")
+# Example usage
+list_of_lists = [[1, 2, 3], [4, 5, 6], [1, 2, 3], [7, 8, 9]]
+unique_list = remove_duplicates(list_of_lists)
+print(unique_list)
