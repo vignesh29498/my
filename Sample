@@ -2,7 +2,7 @@ def remove_duplicates(list_of_lists):
     seen = set()
     unique_lists = []
     for sublist in list_of_lists:
-        # Convert sublist to tuple for hashing
+        # Convert sublist to a tuple so it can be added to a set
         sublist_tuple = tuple(sublist)
         if sublist_tuple not in seen:
             seen.add(sublist_tuple)
