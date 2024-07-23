@@ -7,30 +7,18 @@ file_after = 'path_to_file_after.csv'
 df_before = pd.read_csv(file_before)
 df_after = pd.read_csv(file_after)
 
-# Compare the column names of both DataFrames
-columns_before = df_before.columns
-columns_after = df_after.columns
-
-# Identify and print differences in column names
-if list(columns_before) == list(columns_after):
-    print("No changes in column names.")
+# Ensure the files have the same shape
+if df_before.shape != df_after.shape:
+    print("The two files have different shapes and cannot be compared directly.")
 else:
-    print("Changes in column names detected:")
-    print("Columns in file before change:")
-    print(columns_before)
-    print("Columns in file after change:")
-    print(columns_after)
+    # Compare cell by cell
+    for row in range(df_before.shape[0]):
+        for col in range(df_before.shape[1]):
+            value_before = df_before.iloc[row, col]
+            value_after = df_after.iloc[row, col]
 
-    # Identify specific differences
-    diff_before = set(columns_before) - set(columns_after)
-    diff_after = set(columns_after) - set(columns_before)
-
-    if diff_before:
-        print("\nColumns removed or changed:")
-        for col in diff_before:
-            print(col)
-
-    if diff_after:
-        print("\nNew columns added or changed:")
-        for col in diff_after:
-            print(col)
+            if value_before != value_after:
+                print(f"Difference found at cell ({row}, {col}):")
+                print(f"File before change: {value_before}")
+                print(f"File after change: {value_after}")
+                print()  # Print a blank line for readability
