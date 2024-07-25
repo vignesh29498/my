@@ -16,41 +16,32 @@ def check_column_type_with_tolerance(column, tolerance=5):
     type_counts = column.map(type).value_counts()
     most_common_type_count = type_counts.iloc[0]
     total_mismatches = len(column) - most_common_type_count
-    return total_mismatches <= tolerance
+    return total_mismatches <= tolerance, total_mismatches
 
 # Lists to store results
 empty_columns = []
 consistent_columns_with_tolerance = []
 consistent_columns_without_tolerance = []
+sample_values_with_tolerance = []
+sample_values_without_tolerance = []
 
 # Iterate through each column and check the data types
 for column in df.columns:
     if df[column].isnull().all():
         empty_columns.append(column)
-    elif check_column_type_with_tolerance(df[column]):
-        consistent_columns_with_tolerance.append(column)
     else:
-        consistent_columns_without_tolerance.append(column)
+        is_consistent, mismatches = check_column_type_with_tolerance(df[column])
+        sample_value = df[column].dropna().iloc[0] if not df[column].dropna().empty else None
+        if is_consistent:
+            consistent_columns_with_tolerance.append(column)
+            sample_values_with_tolerance.append(sample_value)
+        else:
+            consistent_columns_without_tolerance.append(column)
+            sample_values_without_tolerance.append(sample_value)
 
 # Output the results
 print("Empty columns:", empty_columns)
 print("Consistent columns with tolerance:", consistent_columns_with_tolerance)
 print("Consistent columns without tolerance:", consistent_columns_without_tolerance)
-
-# Function to generate the column type check results with sample values
-def generate_column_check_results_with_samples():
-    results = []
-    for column in df.columns:
-        sample_value = df[column].dropna().iloc[0] if not df[column].dropna().empty else None
-        if df[column].isnull().all():
-            results.append((column, 'Empty', sample_value))
-        elif check_column_type_with_tolerance(df[column]):
-            results.append((column, 'Consistent with tolerance', sample_value))
-        else:
-            results.append((column, 'Mixed types (beyond tolerance)', sample_value))
-    return results
-
-# Print the results with sample values
-results = generate_column_check_results_with_samples()
-for column, status, sample in results:
-    print(f"Column '{column}' status: {status}, sample value: {sample}")
+print("Sample values for columns with tolerance:", sample_values_with_tolerance)
+print("Sample values for columns without tolerance:", sample_values_without_tolerance)
