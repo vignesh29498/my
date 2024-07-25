@@ -6,6 +6,9 @@ df = pd.read_csv('sample_data.csv')
 # Limit the DataFrame to the first 1000 rows
 df = df.head(1000)
 
+# Rename the columns as 1, 2, 3, ...
+df.columns = range(1, len(df.columns) + 1)
+
 # Function to check if the number of mismatches in data types in a column is within the allowed limit
 def check_column_type_with_tolerance(column, tolerance=5):
     if column.isnull().all():
@@ -15,12 +18,38 @@ def check_column_type_with_tolerance(column, tolerance=5):
     total_mismatches = len(column) - most_common_type_count
     return total_mismatches <= tolerance
 
-# Iterate through each column and check if the data types are similar within the allowed tolerance
+# Lists to store results
+empty_columns = []
+consistent_columns_with_tolerance = []
+consistent_columns_without_tolerance = []
+
+# Iterate through each column and check the data types
 for column in df.columns:
-    if check_column_type_with_tolerance(df[column]):
-        print(f"Column '{column}' has consistent data types within tolerance.")
+    if df[column].isnull().all():
+        empty_columns.append(column)
+    elif check_column_type_with_tolerance(df[column]):
+        consistent_columns_with_tolerance.append(column)
     else:
+        consistent_columns_without_tolerance.append(column)
+
+# Output the results
+print("Empty columns:", empty_columns)
+print("Consistent columns with tolerance:", consistent_columns_with_tolerance)
+print("Consistent columns without tolerance:", consistent_columns_without_tolerance)
+
+# Function to generate the column type check results
+def generate_column_check_results():
+    results = []
+    for column in df.columns:
         if df[column].isnull().all():
-            print(f"Column '{column}' is completely empty.")
+            results.append((column, 'Empty'))
+        elif check_column_type_with_tolerance(df[column]):
+            results.append((column, 'Consistent with tolerance'))
         else:
-            print(f"Column '{column}' exceeds the mismatch tolerance.")
+            results.append((column, 'Mixed types (beyond tolerance)'))
+    return results
+
+# Print the results
+results = generate_column_check_results()
+for column, status in results:
+    print(f"Column '{column}' status: {status}")
