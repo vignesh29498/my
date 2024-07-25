@@ -1,32 +1,26 @@
-import xml.etree.ElementTree as ET
+import pandas as pd
 
-def compare_xml(file1, file2):
-    # Parse XML files
-    tree1 = ET.parse(file1)
-    tree2 = ET.parse(file2)
-    
-    root1 = tree1.getroot()
-    root2 = tree2.getroot()
+# Load the CSV file into a DataFrame
+df = pd.read_csv('sample_data.csv')
 
-    # Helper function to convert XML element to a dictionary
-    def element_to_dict(element):
-        return {child.tag: child.text for child in element}
+# Limit the DataFrame to the first 1000 rows
+df = df.head(1000)
 
-    # Convert roots to dictionaries
-    dict1 = element_to_dict(root1)
-    dict2 = element_to_dict(root2)
+# Function to check if the number of mismatches in data types in a column is within the allowed limit
+def check_column_type_with_tolerance(column, tolerance=5):
+    if column.isnull().all():
+        return False  # Treat empty columns as having mixed data types
+    type_counts = column.map(type).value_counts()
+    most_common_type_count = type_counts.iloc[0]
+    total_mismatches = len(column) - most_common_type_count
+    return total_mismatches <= tolerance
 
-    # Compare dictionaries
-    return dict1 == dict2
-
-# File paths
-file1 = 'file1.xml'
-file2 = 'file2.xml'
-
-# Compare XML files
-if compare_xml(file1, file2):
-    print("XML files match.")
-else:
-    print("XML files do not match.")
-    # Optionally, print details of differences
-    print(f"Details of mismatch in {file1} and {file2}")
+# Iterate through each column and check if the data types are similar within the allowed tolerance
+for column in df.columns:
+    if check_column_type_with_tolerance(df[column]):
+        print(f"Column '{column}' has consistent data types within tolerance.")
+    else:
+        if df[column].isnull().all():
+            print(f"Column '{column}' is completely empty.")
+        else:
+            print(f"Column '{column}' exceeds the mismatch tolerance.")
