@@ -45,3 +45,61 @@ print("Consistent columns with tolerance:", consistent_columns_with_tolerance)
 print("Consistent columns without tolerance:", consistent_columns_without_tolerance)
 print("Sample values for columns with tolerance:", sample_values_with_tolerance)
 print("Sample values for columns without tolerance:", sample_values_without_tolerance)
+
+
+
+import pandas as pd
+import random
+
+# Load the CSV file into a DataFrame
+df = pd.read_csv('sample_data.csv')
+
+# Limit the DataFrame to the first 1000 rows
+df = df.head(1000)
+
+# Rename the columns as 1, 2, 3, ...
+df.columns = range(1, len(df.columns) + 1)
+
+# Function to check if the number of mismatches in data types in a column is within the allowed limit
+def check_column_type_with_tolerance(column, tolerance=5):
+    if column.isnull().all():
+        return False  # Treat empty columns as having mixed data types
+    type_counts = column.map(type).value_counts()
+    most_common_type_count = type_counts.iloc[0]
+    total_mismatches = len(column) - most_common_type_count
+    return total_mismatches <= tolerance, total_mismatches
+
+# Function to get a random sample value from a column
+def get_random_sample_value(column):
+    non_null_values = column.dropna()
+    if not non_null_values.empty:
+        return random.choice(non_null_values.values)
+    return None
+
+# Lists to store results
+empty_columns = []
+consistent_columns_with_tolerance = []
+consistent_columns_without_tolerance = []
+sample_values_with_tolerance = []
+sample_values_without_tolerance = []
+
+# Iterate through each column and check the data types
+for column in df.columns:
+    if df[column].isnull().all():
+        empty_columns.append(column)
+    else:
+        is_consistent, mismatches = check_column_type_with_tolerance(df[column])
+        sample_value = get_random_sample_value(df[column])
+        if is_consistent:
+            consistent_columns_with_tolerance.append(column)
+            sample_values_with_tolerance.append(sample_value)
+        else:
+            consistent_columns_without_tolerance.append(column)
+            sample_values_without_tolerance.append(sample_value)
+
+# Output the results
+print("Empty columns:", empty_columns)
+print("Consistent columns with tolerance:", consistent_columns_with_tolerance)
+print("Consistent columns without tolerance:", consistent_columns_without_tolerance)
+print("Sample values for columns with tolerance:", sample_values_with_tolerance)
+print("Sample values for columns without tolerance:", sample_values_without_tolerance)
