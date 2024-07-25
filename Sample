@@ -37,19 +37,20 @@ print("Empty columns:", empty_columns)
 print("Consistent columns with tolerance:", consistent_columns_with_tolerance)
 print("Consistent columns without tolerance:", consistent_columns_without_tolerance)
 
-# Function to generate the column type check results
-def generate_column_check_results():
+# Function to generate the column type check results with sample values
+def generate_column_check_results_with_samples():
     results = []
     for column in df.columns:
+        sample_value = df[column].dropna().iloc[0] if not df[column].dropna().empty else None
         if df[column].isnull().all():
-            results.append((column, 'Empty'))
+            results.append((column, 'Empty', sample_value))
         elif check_column_type_with_tolerance(df[column]):
-            results.append((column, 'Consistent with tolerance'))
+            results.append((column, 'Consistent with tolerance', sample_value))
         else:
-            results.append((column, 'Mixed types (beyond tolerance)'))
+            results.append((column, 'Mixed types (beyond tolerance)', sample_value))
     return results
 
-# Print the results
-results = generate_column_check_results()
-for column, status in results:
-    print(f"Column '{column}' status: {status}")
+# Print the results with sample values
+results = generate_column_check_results_with_samples()
+for column, status, sample in results:
+    print(f"Column '{column}' status: {status}, sample value: {sample}")
