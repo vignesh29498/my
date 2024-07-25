@@ -1,8 +1,11 @@
 import pandas as pd
-import random
 
 # Load the CSV file into a DataFrame
 df = pd.read_csv('local_repository.csv')
+
+# Check if the DataFrame has at least two rows
+if df.shape[0] < 2:
+    raise ValueError("The CSV file must have at least two rows: one for labels and one for values.")
 
 # Rename the columns as 1, 2, 3, ...
 df.columns = range(1, len(df.columns) + 1)
