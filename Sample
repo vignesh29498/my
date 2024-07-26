@@ -1,13 +1,13 @@
 import pandas as pd
 
-def find_labels(excel_file, search_values):
-    # Load the Excel file
-    df = pd.read_excel(excel_file)
-
+def find_labels(csv_file, search_values):
+    # Load the CSV file
+    df = pd.read_csv(csv_file, header=None)
+    
     # Extract the first row as labels and the second row as values
     labels = df.iloc[0]
     values = df.iloc[1]
-
+    
     # Initialize an empty list to store matching labels
     matching_labels = []
 
@@ -21,7 +21,7 @@ def find_labels(excel_file, search_values):
     return matching_labels
 
 # Example usage
-excel_file = 'your_file.xlsx'
-search_values = ['value1', 'value2', 'value3']
-matched_labels = find_labels(excel_file, search_values)
+csv_file = 'your_file.csv'
+search_values = ['2', '173040 A', 'USD']  # Example values to search for
+matched_labels = find_labels(csv_file, search_values)
 print("Matched Labels:", matched_labels)
