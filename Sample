@@ -1,18 +1,18 @@
 import pandas as pd
 
-def create_output_csv(input_values, input_positions, matched_values, matched_labels, output_file):
+def create_output_csv(input_positions, matched_labels, output_file):
     # Determine the maximum position to ensure all positions fit
     max_position = max(input_positions)
     
-    # Create an empty DataFrame with the required number of columns
-    df = pd.DataFrame(columns=range(max_position))
+    # Create an empty DataFrame with the required number of rows and columns
+    df = pd.DataFrame(index=range(max_position), columns=['Value'])
     
     # Initialize the DataFrame with placeholder values
-    df.loc[0] = ['NA'] * max_position
+    df['Value'] = ['NA'] * max_position
     
     # Insert the matched labels into the specified positions
     for label, position in zip(matched_labels, input_positions):
-        df.iloc[0, position - 1] = label  # Position is 1-based, so subtract 1 for 0-based indexing
+        df.at[position - 1, 'Value'] = label  # Position is 1-based, so subtract 1 for 0-based indexing
     
     # Save the DataFrame to a CSV file (overwrite if exists)
     df.to_csv(output_file, index=False, header=False)
@@ -20,10 +20,8 @@ def create_output_csv(input_values, input_positions, matched_values, matched_lab
     print(f"CSV file '{output_file}' created/overwritten successfully.")
 
 # Example usage
-input_values = ['2', 'usd', '...']
-input_positions = [3, 8, 12]
-matched_values = ['USD']
-matched_labels = ['country']
+input_positions = [3, 8, 12]  # Row positions where data should be written
+matched_labels = ['country', 'city', 'currency']  # Labels to be written in the specified rows
 output_file = 'output.csv'
 
-create_output_csv(input_values, input_positions, matched_values, matched_labels, output_file)
+create_output_csv(input_positions, matched_labels, output_file)
