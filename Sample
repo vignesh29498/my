@@ -1,56 +1,27 @@
 import pandas as pd
 
-# Load the CSV file into a DataFrame
-df = pd.read_csv('local_repository.csv')
+def find_labels(excel_file, search_values):
+    # Load the Excel file
+    df = pd.read_excel(excel_file)
 
-# Check if the DataFrame has at least two rows
-if df.shape[0] < 2:
-    raise ValueError("The CSV file must have at least two rows: one for labels and one for values.")
+    # Extract the first row as labels and the second row as values
+    labels = df.iloc[0]
+    values = df.iloc[1]
 
-# Rename the columns as 1, 2, 3, ...
-df.columns = range(1, len(df.columns) + 1)
+    # Initialize an empty list to store matching labels
+    matching_labels = []
 
-# Extract labels and data
-labels = df.iloc[0]
-data = df.iloc[1]
+    # Iterate over the search values and check for matches in the second row
+    for value in search_values:
+        if value in values.values:
+            # Find the index of the matching value in the second row
+            index = values[values == value].index[0]
+            matching_labels.append(labels[index])
 
-# Function to get labels for input values
-def get_labels_for_values(input_values):
-    value_label_map = dict(zip(data, labels))
-    return [value_label_map.get(value, None) for value in input_values]
+    return matching_labels
 
-# Function to place values in specified positions
-def place_values_in_positions(values, positions, labels_for_values):
-    result = [None] * len(labels)
-    labeled_result = [None] * len(labels)
-    for value, position, label in zip(values, positions, labels_for_values):
-        if 1 <= position <= len(result):
-            result[position - 1] = value
-            labeled_result[position - 1] = label
-    return result, labeled_result
-
-# Example input values and positions
-input_values = [3, 'hj56784gh']  # Values to find labels for
-positions = [2, 5]  # Positions to place the corresponding values
-
-# Get labels for input values
-labels_for_values = get_labels_for_values(input_values)
-print("Labels for input values:", labels_for_values)
-
-# Place values in specified positions
-placed_values, labeled_positions = place_values_in_positions(input_values, positions, labels_for_values)
-print("Values placed in positions:", placed_values)
-print("Labels placed in positions:", labeled_positions)
-
-# Create a new DataFrame to store the results
-new_df = pd.DataFrame(columns=range(1, len(labels) + 1))
-
-# Add a new row with the placed values and labels
-new_df.loc[0] = labeled_positions
-new_df.loc[1] = placed_values
-
-# Write the new DataFrame to a new CSV file
-new_csv_filename = 'updated_repository.csv'
-new_df.to_csv(new_csv_filename, index=False)
-
-print(f"New CSV file '{new_csv_filename}' created with placed values and labels.")
+# Example usage
+excel_file = 'your_file.xlsx'
+search_values = ['value1', 'value2', 'value3']
+matched_labels = find_labels(excel_file, search_values)
+print("Matched Labels:", matched_labels)
