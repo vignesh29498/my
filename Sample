@@ -25,3 +25,22 @@ matched_labels = ['country', 'city', 'currency']  # Labels to be written in the 
 output_file = 'output.csv'
 
 create_output_csv(input_positions, matched_labels, output_file)
+
+
+def find_positions(values_list, positions_list, search_values):
+    # Create a dictionary mapping values to their positions
+    value_position_map = dict(zip(values_list, positions_list))
+    
+    # Find positions for the search values
+    result_positions = [value_position_map.get(value, 'Not Found') for value in search_values]
+    
+    return result_positions
+
+# Example usage
+values_list = ['2', 'usd', 'other']
+positions_list = [3, 8, 12]
+search_values = ['usd', '2', 'new_value']
+
+positions = find_positions(values_list, positions_list, search_values)
+print("Positions:", positions)
+
