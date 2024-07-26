@@ -14,14 +14,14 @@ def create_output_csv(input_values, input_positions, matched_values, matched_lab
     for value, position in zip(matched_labels, input_positions):
         df.at[0, position] = value
     
-    # Save the DataFrame to a CSV file
+    # Save the DataFrame to a CSV file (overwrite if exists)
     df.to_csv(output_file, index=False, header=False)
     
-    print(f"CSV file '{output_file}' created successfully.")
+    print(f"CSV file '{output_file}' created/overwritten successfully.")
 
 # Example usage
 input_values = ['2', 'usd', '...']
-input_positions = [3, 8, ...]
+input_positions = [3, 8, 12]
 matched_values = ['USD']
 matched_labels = ['country']
 output_file = 'output.csv'
