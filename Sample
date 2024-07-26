@@ -1,18 +1,18 @@
 import pandas as pd
 
 def create_output_csv(input_values, input_positions, matched_values, matched_labels, output_file):
-    # Determine the maximum column index to ensure all positions fit
+    # Determine the maximum position to ensure all positions fit
     max_position = max(input_positions)
     
     # Create an empty DataFrame with the required number of columns
-    df = pd.DataFrame(columns=range(1, max_position + 1))
+    df = pd.DataFrame(columns=range(max_position))
     
     # Initialize the DataFrame with placeholder values
     df.loc[0] = ['NA'] * max_position
     
     # Insert the matched labels into the specified positions
-    for value, position in zip(matched_labels, input_positions):
-        df.at[0, position] = value
+    for label, position in zip(matched_labels, input_positions):
+        df.iloc[0, position - 1] = label  # Position is 1-based, so subtract 1 for 0-based indexing
     
     # Save the DataFrame to a CSV file (overwrite if exists)
     df.to_csv(output_file, index=False, header=False)
