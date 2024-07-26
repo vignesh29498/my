@@ -60,3 +60,35 @@ csv_file = 'your_file.csv'
 search_values = ['2', '173040 A', 'USD']  # Example values to search for
 matched_labels = find_labels(csv_file, search_values)
 print("Matched Labels:", matched_labels)
+
+
+import pandas as pd
+
+def find_labels_and_values(csv_file, search_values):
+    # Load the CSV file
+    df = pd.read_csv(csv_file, header=None)
+
+    # Extract the first column as labels and the second column as values
+    labels = df.iloc[:, 0]
+    values = df.iloc[:, 1]
+
+    # Initialize lists to store matching labels and values
+    matching_labels = []
+    matching_values = []
+
+    # Iterate over the search values and check for matches in the second column
+    for value in search_values:
+        if value in values.values:
+            # Find the index of the matching value in the second column
+            index = values[values == value].index[0]
+            matching_labels.append(labels[index])
+            matching_values.append(value)
+
+    return matching_labels, matching_values
+
+# Example usage
+csv_file = 'your_file.csv'
+search_values = ['2', '173040 A', 'USD']  # Example values to search for
+matched_labels, matched_values = find_labels_and_values(csv_file, search_values)
+print("Matched Labels:", matched_labels)
+print("Matched Values:", matched_values)
