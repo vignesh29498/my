@@ -1,6 +1,6 @@
 import pandas as pd
 
-def update_positions_with_empty(csv_file, positions_list, output_file):
+def update_first_column_with_empty(csv_file, row_positions, output_file):
     # Read the existing CSV file
     try:
         df = pd.read_csv(csv_file, header=None)
@@ -8,23 +8,25 @@ def update_positions_with_empty(csv_file, positions_list, output_file):
         print(f"File '{csv_file}' not found.")
         return
 
-    # Ensure DataFrame has enough columns to accommodate all positions
-    max_position = max(positions_list)
-    if max_position > len(df.columns):
-        for _ in range(max_position - len(df.columns)):
-            df[len(df.columns)] = 'NA'
+    # Ensure DataFrame has enough rows to accommodate all specified positions
+    max_row_position = max(row_positions)
     
-    # Update specified positions in the first row with "empty"
-    for position in positions_list:
-        df.iloc[0, position - 1] = "empty"  # Adjusting for 0-based indexing
+    # Adjust rows if necessary
+    if max_row_position > len(df):
+        for _ in range(max_row_position - len(df)):
+            df.loc[len(df)] = ['NA'] * len(df.columns)
+    
+    # Update the first column in specified rows with "empty"
+    for row_pos in row_positions:
+        df.iloc[row_pos - 1, 0] = "empty"  # Adjusting for 0-based indexing
     
     # Save the DataFrame to a CSV file, overwriting the existing file
     df.to_csv(output_file, index=False, header=False)
     print(f"CSV file '{output_file}' updated successfully.")
 
 # Example usage
-positions_list = [3, 8, 12]  # Specific row positions to be updated with "empty"
+row_positions = [1, 2, 3]  # Specific row positions to be updated with "empty"
 csv_file = 'output.csv'
 output_file = 'output.csv'
 
-update_positions_with_empty(csv_file, positions_list, output_file)
+update_first_column_with_empty(csv_file, row_positions, output_file)
