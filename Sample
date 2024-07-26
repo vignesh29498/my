@@ -1,94 +1,29 @@
 import pandas as pd
 
-def update_csv(csv_file, output_file, input_values, input_positions, matched_values, matched_labels):
-    # Load the CSV file
-    df = pd.read_csv(csv_file, header=None)
+def create_output_csv(input_values, input_positions, matched_values, matched_labels, output_file):
+    # Determine the maximum column index to ensure all positions fit
+    max_position = max(input_positions)
     
-    # Create a copy of the DataFrame to modify
-    df_updated = df.copy()
-
-    # Iterate over the input values and their positions
-    for input_value, position in zip(input_values, input_positions):
-        # Check if the input value matches any of the matched values
-        if input_value in matched_values:
-            # Find the index of the matching value in matched_values
-            matched_index = matched_values.index(input_value)
-            # Get the corresponding label from matched_labels
-            matched_label = matched_labels[matched_index]
-            # Replace the value in the appropriate column with the matched label
-            df_updated.iloc[1, position] = matched_label
-
-    # Write the updated DataFrame to a new CSV file
-    df_updated.to_csv(output_file, index=False, header=False)
+    # Create an empty DataFrame with the required number of columns
+    df = pd.DataFrame(columns=range(1, max_position + 1))
+    
+    # Initialize the DataFrame with placeholder values
+    df.loc[0] = ['NA'] * max_position
+    
+    # Insert the matched labels into the specified positions
+    for value, position in zip(matched_labels, input_positions):
+        df.at[0, position] = value
+    
+    # Save the DataFrame to a CSV file
+    df.to_csv(output_file, index=False, header=False)
+    
+    print(f"CSV file '{output_file}' created successfully.")
 
 # Example usage
-csv_file = 'input_file.csv'
-output_file = 'output_file.csv'
-input_values = ['2', 'USD']  # Example values to match
-input_positions = [3, 8]  # Positions in the row to replace
+input_values = ['2', 'usd', '...']
+input_positions = [3, 8, ...]
 matched_values = ['USD']
-matched_labels = ['Country']
+matched_labels = ['country']
+output_file = 'output.csv'
 
-update_csv(csv_file, output_file, input_values, input_positions, matched_values, matched_labels)
-
-
-
-import pandas as pd
-
-def find_labels(csv_file, search_values):
-    # Load the CSV file
-    df = pd.read_csv(csv_file, header=None)
-
-    # Extract the first column as labels and the second column as values
-    labels = df.iloc[:, 0]
-    values = df.iloc[:, 1]
-
-    # Initialize an empty list to store matching labels
-    matching_labels = []
-
-    # Iterate over the search values and check for matches in the second column
-    for value in search_values:
-        if value in values.values:
-            # Find the index of the matching value in the second column
-            index = values[values == value].index[0]
-            matching_labels.append(labels[index])
-
-    return matching_labels
-
-# Example usage
-csv_file = 'your_file.csv'
-search_values = ['2', '173040 A', 'USD']  # Example values to search for
-matched_labels = find_labels(csv_file, search_values)
-print("Matched Labels:", matched_labels)
-
-
-import pandas as pd
-
-def find_labels_and_values(csv_file, search_values):
-    # Load the CSV file
-    df = pd.read_csv(csv_file, header=None)
-
-    # Extract the first column as labels and the second column as values
-    labels = df.iloc[:, 0]
-    values = df.iloc[:, 1]
-
-    # Initialize lists to store matching labels and values
-    matching_labels = []
-    matching_values = []
-
-    # Iterate over the search values and check for matches in the second column
-    for value in search_values:
-        if value in values.values:
-            # Find the index of the matching value in the second column
-            index = values[values == value].index[0]
-            matching_labels.append(labels[index])
-            matching_values.append(value)
-
-    return matching_labels, matching_values
-
-# Example usage
-csv_file = 'your_file.csv'
-search_values = ['2', '173040 A', 'USD']  # Example values to search for
-matched_labels, matched_values = find_labels_and_values(csv_file, search_values)
-print("Matched Labels:", matched_labels)
-print("Matched Values:", matched_values)
+create_output_csv(input_values, input_positions, matched_values, matched_labels, output_file)
