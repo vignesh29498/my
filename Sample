@@ -1,46 +1,30 @@
 import pandas as pd
 
-def create_output_csv(input_positions, matched_labels, output_file):
-    # Determine the maximum position to ensure all positions fit
-    max_position = max(input_positions)
+def update_positions_with_empty(csv_file, positions_list, output_file):
+    # Read the existing CSV file
+    try:
+        df = pd.read_csv(csv_file, header=None)
+    except FileNotFoundError:
+        print(f"File '{csv_file}' not found.")
+        return
+
+    # Ensure DataFrame has enough columns to accommodate all positions
+    max_position = max(positions_list)
+    if max_position > len(df.columns):
+        for _ in range(max_position - len(df.columns)):
+            df[len(df.columns)] = 'NA'
     
-    # Create an empty DataFrame with the required number of rows and columns
-    df = pd.DataFrame(index=range(max_position), columns=['Value'])
+    # Update specified positions in the first row with "empty"
+    for position in positions_list:
+        df.iloc[0, position - 1] = "empty"  # Adjusting for 0-based indexing
     
-    # Initialize the DataFrame with placeholder values
-    df['Value'] = ['NA'] * max_position
-    
-    # Insert the matched labels into the specified positions
-    for label, position in zip(matched_labels, input_positions):
-        df.at[position - 1, 'Value'] = label  # Position is 1-based, so subtract 1 for 0-based indexing
-    
-    # Save the DataFrame to a CSV file (overwrite if exists)
+    # Save the DataFrame to a CSV file, overwriting the existing file
     df.to_csv(output_file, index=False, header=False)
-    
-    print(f"CSV file '{output_file}' created/overwritten successfully.")
+    print(f"CSV file '{output_file}' updated successfully.")
 
 # Example usage
-input_positions = [3, 8, 12]  # Row positions where data should be written
-matched_labels = ['country', 'city', 'currency']  # Labels to be written in the specified rows
+positions_list = [3, 8, 12]  # Specific row positions to be updated with "empty"
+csv_file = 'output.csv'
 output_file = 'output.csv'
 
-create_output_csv(input_positions, matched_labels, output_file)
-
-
-def find_positions(values_list, positions_list, search_values):
-    # Create a dictionary mapping values to their positions
-    value_position_map = dict(zip(values_list, positions_list))
-    
-    # Find positions for the search values
-    result_positions = [value_position_map.get(value, 'Not Found') for value in search_values]
-    
-    return result_positions
-
-# Example usage
-values_list = ['2', 'usd', 'other']
-positions_list = [3, 8, 12]
-search_values = ['usd', '2', 'new_value']
-
-positions = find_positions(values_list, positions_list, search_values)
-print("Positions:", positions)
-
+update_positions_with_empty(csv_file, positions_list, output_file)
