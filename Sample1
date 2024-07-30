@@ -1,6 +1,6 @@
 import pandas as pd
 
-def replace_value_with_list(file_path, value_to_replace, replacement_list):
+def replace_value_with_full_list(file_path, value_to_replace, replacement_list):
     # Read the CSV file into a DataFrame
     df = pd.read_csv(file_path)
     
@@ -8,21 +8,20 @@ def replace_value_with_list(file_path, value_to_replace, replacement_list):
     if df.empty or df.shape[1] == 0:
         raise ValueError("The CSV file is empty or does not have any columns")
     
-    # Check if the value_to_replace is in the first column
-    if df.iloc[:, 0].isin([value_to_replace]).any():
-        # Replace occurrences of value_to_replace with the replacement list
-        df.iloc[:, 0] = df.iloc[:, 0].replace(value_to_replace, ', '.join(replacement_list))
-        
-        # Save the modified DataFrame back to a CSV file
-        df.to_csv(file_path, index=False)
-        
-        print(f"Replaced '{value_to_replace}' with {replacement_list} in the first column.")
-    else:
-        print(f"Value '{value_to_replace}' not found in the first column.")
+    # Convert the replacement list to a comma-separated string
+    replacement_str = ', '.join(replacement_list)
+    
+    # Replace occurrences of value_to_replace with the replacement string
+    df.iloc[:, 0] = df.iloc[:, 0].replace(value_to_replace, replacement_str)
+    
+    # Save the modified DataFrame back to a CSV file
+    df.to_csv(file_path, index=False)
+    
+    print(f"Replaced '{value_to_replace}' with '{replacement_str}' in the first column.")
 
 # Example usage
 file_path = 'path/to/your/file.csv'
 value_to_replace = 'n'
 replacement_list = ['ab', 'gh', 'hiy', 'ljy', 'h']
 
-replace_value_with_list(file_path, value_to_replace, replacement_list)
+replace_value_with_full_list(file_path, value_to_replace, replacement_list)
