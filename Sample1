@@ -51,3 +51,19 @@ with open(filename, mode='w', newline='') as file:
     writer.writerows(data)
 
 print(f"Updated '{filename}' with specified names in column {column + 1} at specified rows.")
+
+
+import pandas as pd
+
+# File name
+filename = 'example.xlsx'
+
+# Read the Excel file
+try:
+    df = pd.read_excel(filename, sheet_name=0)  # Load the first sheet
+    first_row = df.iloc[0].tolist()  # Convert the first row to a list
+    print("First row as a list:", first_row)
+except FileNotFoundError:
+    print(f"File '{filename}' not found.")
+except Exception as e:
+    print(f"An error occurred: {e}")
