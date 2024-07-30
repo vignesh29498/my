@@ -4,20 +4,6 @@ import pandas as pd
 csv1 = pd.read_csv('path_to_csv1.csv')
 csv2 = pd.read_csv('path_to_csv2.csv')
 
-# Merge the two dataframes on the common label column
-merged_df = pd.merge(csv1, csv2, on='Label', how='left')
-
-# Overwrite the first CSV with the merged dataframe
-merged_df.to_csv('path_to_csv1.csv', index=False)
-
-
-
-import pandas as pd
-
-# Load both CSV files
-csv1 = pd.read_csv('path_to_csv1.csv')
-csv2 = pd.read_csv('path_to_csv2.csv')
-
 # Print column names to ensure they match
 print("CSV1 Columns:", csv1.columns)
 print("CSV2 Columns:", csv2.columns)
