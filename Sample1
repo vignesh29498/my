@@ -1,17 +1,3 @@
-import csv
-
-# File name
-filename = 'empty_file.csv'
-
-# Create an empty CSV file
-with open(filename, mode='w', newline='') as file:
-    writer = csv.writer(file)
-    # No headers or rows written
-
-print(f"Empty CSV file '{filename}' created successfully.")
-
-
-
 import pandas as pd
 
 # File names
@@ -26,23 +12,27 @@ df2 = pd.read_csv(file2)
 if df1.empty or df2.empty:
     print("One or both CSV files are empty.")
 else:
-    # Check the column names
+    # Print columns for debugging
     print("Columns in file1:", df1.columns)
     print("Columns in file2:", df2.columns)
 
-    # Assuming the first column in both files should be used
+    # Use the first column of each DataFrame
     df1_first_col = df1.iloc[:, 0]
     df2_first_col = df2.iloc[:, 0]
 
     # Find matches
     matched_rows = df2[df2_first_col.isin(df1_first_col)]
 
-    # Update the first DataFrame with matched rows
-    df1_updated = df1.copy()  # Create a copy to update
+    # Create a copy to update
+    df1_updated = df1.copy()
+
+    # Update df1 with rows from df2
     for index, value in enumerate(df1_first_col):
         if value in matched_rows[df2_first_col.name].values:
-            matched_row = matched_rows[matched_rows[df2_first_col.name] == value]
-            df1_updated.loc[index, df1.columns] = matched_row.iloc[0].values
+            # Get the corresponding row from df2
+            matched_row = matched_rows[matched_rows[df2_first_col.name] == value].iloc[0]
+            # Assign the entire row (ensure that both DataFrames have the same number of columns)
+            df1_updated.iloc[index] = matched_row.values
 
     # Save the updated file
     df1_updated.to_csv('updated_file1.csv', index=False)
