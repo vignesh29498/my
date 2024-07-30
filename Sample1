@@ -1,64 +1,15 @@
 import pandas as pd
 
-# File names
-file1 = 'file1.csv'  # Contains specific values in the first column
-file2 = 'file2.csv'  # Contains all records
+def get_repeated_values(main_list):
+    # Convert the list to a pandas Series
+    series = pd.Series(main_list)
+    
+    # Get the repeated values
+    repeated_values = series[series.duplicated()].unique()
+    
+    return list(repeated_values)
 
-# Read the CSV files
-df1 = pd.read_csv(file1)
-df2 = pd.read_csv(file2)
-
-# Ensure both files have at least one column
-if df1.empty or df2.empty:
-    print("One or both CSV files are empty.")
-else:
-    # Print columns for debugging
-    print("Columns in file1:", df1.columns)
-    print("Columns in file2:", df2.columns)
-
-    # Use the first column of each DataFrame
-    df1_first_col = df1.iloc[:, 0]
-    df2_first_col = df2.iloc[:, 0]
-
-    # Find matches
-    matched_rows = df2[df2_first_col.isin(df1_first_col)]
-
-    # Create a copy to update
-    df1_updated = df1.copy()
-
-    # Update df1 with rows from df2
-    for index, value in enumerate(df1_first_col):
-        if value in matched_rows[df2_first_col.name].values:
-            # Get the corresponding row from df2
-            matched_row = matched_rows[matched_rows[df2_first_col.name] == value].iloc[0]
-            # Assign the entire row (ensure that both DataFrames have the same number of columns)
-            df1_updated.iloc[index] = matched_row.values
-
-    # Save the updated file
-    df1_updated.to_csv('updated_file1.csv', index=False)
-
-    print("File updated successfully. Saved as 'updated_file1.csv'.")
-
-
-
-import pandas as pd
-
-# File name
-filename = 'file.csv'  # Replace with your CSV file name
-
-# Read the CSV file
-try:
-    df = pd.read_csv(filename)  # Load the CSV file
-
-    # Extract values from the first column
-    first_column_values = df.iloc[:, 0].tolist()  # Values from the first column
-
-    # Extract row positions (indices)
-    row_positions = df.index.tolist()  # Row positions as a list
-
-    print("First column values:", first_column_values)
-    print("Row positions:", row_positions)
-except FileNotFoundError:
-    print(f"File '{filename}' not found.")
-except Exception as e:
-    print(f"An error occurred: {e}")
+# Example usage
+main_list = [1, 2, 3, 2, 4, 5, 1, 6, 7, 4]
+repeated_values = get_repeated_values(main_list)
+print("Repeated values:", repeated_values)
