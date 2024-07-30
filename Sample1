@@ -12,64 +12,6 @@ print(f"Empty CSV file '{filename}' created successfully.")
 
 
 
-import csv
-
-# File name
-filename = 'empty_file.csv'
-
-# Specify the column and the rows where you want to write
-# Example: rows = [3, 5], names = ['SpecialName1', 'SpecialName2'], column = 2
-rows = [3, 5]  # 0-based index for rows
-names = ['SpecialName1', 'SpecialName2']
-column = 2  # 0-based index for the column
-
-# Read the existing data (if any)
-data = []
-try:
-    with open(filename, mode='r', newline='') as file:
-        reader = csv.reader(file)
-        data = list(reader)
-except FileNotFoundError:
-    # If file not found, initialize an empty list
-    pass
-
-# Ensure the data list has enough rows
-max_row = max(rows)
-while len(data) <= max_row:
-    data.append([])
-
-# Modify the specific cells
-for row_num, name in zip(rows, names):
-    # Ensure the specified row has enough columns
-    while len(data[row_num]) <= column:
-        data[row_num].append('')
-    data[row_num][column] = name
-
-# Write the data back to the CSV
-with open(filename, mode='w', newline='') as file:
-    writer = csv.writer(file)
-    writer.writerows(data)
-
-print(f"Updated '{filename}' with specified names in column {column + 1} at specified rows.")
-
-
-import pandas as pd
-
-# File name
-filename = 'example.csv'
-
-# Read the CSV file
-try:
-    df = pd.read_csv(filename)  # Load the CSV file
-    first_row = df.iloc[0].tolist()  # Convert the first row to a list
-    print("First row as a list:", first_row)
-except FileNotFoundError:
-    print(f"File '{filename}' not found.")
-except Exception as e:
-    print(f"An error occurred: {e}")
-
-
-
 import pandas as pd
 
 # File names
@@ -77,29 +19,32 @@ file1 = 'file1.csv'  # Contains specific values in the first column
 file2 = 'file2.csv'  # Contains all records
 
 # Read the CSV files
-df1 = pd.read_csv(file1)  # This file has the specific values to match
-df2 = pd.read_csv(file2)  # This file contains all records
+df1 = pd.read_csv(file1)
+df2 = pd.read_csv(file2)
 
 # Ensure both files have at least one column
 if df1.empty or df2.empty:
     print("One or both CSV files are empty.")
 else:
-    # Ensure columns are named (or use default naming if not)
-    if df1.columns.size == 1:
-        df1.columns = ['Value']
-    if df2.columns.size == 1:
-        df2.columns = ['Value']
-    
+    # Check the column names
+    print("Columns in file1:", df1.columns)
+    print("Columns in file2:", df2.columns)
+
+    # Assuming the first column in both files should be used
+    df1_first_col = df1.iloc[:, 0]
+    df2_first_col = df2.iloc[:, 0]
+
     # Find matches
-    matched_rows = df2[df2['Value'].isin(df1['Value'])]
+    matched_rows = df2[df2_first_col.isin(df1_first_col)]
 
     # Update the first DataFrame with matched rows
-    for index, row in df1.iterrows():
-        if row['Value'] in matched_rows['Value'].values:
-            matched_row = matched_rows[matched_rows['Value'] == row['Value']]
-            df1.loc[index, matched_row.columns] = matched_row.values[0]
+    df1_updated = df1.copy()  # Create a copy to update
+    for index, value in enumerate(df1_first_col):
+        if value in matched_rows[df2_first_col.name].values:
+            matched_row = matched_rows[matched_rows[df2_first_col.name] == value]
+            df1_updated.loc[index, df1.columns] = matched_row.iloc[0].values
 
     # Save the updated file
-    df1.to_csv('updated_file1.csv', index=False)
+    df1_updated.to_csv('updated_file1.csv', index=False)
 
     print("File updated successfully. Saved as 'updated_file1.csv'.")
