@@ -67,3 +67,39 @@ except FileNotFoundError:
     print(f"File '{filename}' not found.")
 except Exception as e:
     print(f"An error occurred: {e}")
+
+
+
+import pandas as pd
+
+# File names
+file1 = 'file1.csv'  # Contains specific values in the first column
+file2 = 'file2.csv'  # Contains all records
+
+# Read the CSV files
+df1 = pd.read_csv(file1)  # This file has the specific values to match
+df2 = pd.read_csv(file2)  # This file contains all records
+
+# Ensure both files have at least one column
+if df1.empty or df2.empty:
+    print("One or both CSV files are empty.")
+else:
+    # Ensure columns are named (or use default naming if not)
+    if df1.columns.size == 1:
+        df1.columns = ['Value']
+    if df2.columns.size == 1:
+        df2.columns = ['Value']
+    
+    # Find matches
+    matched_rows = df2[df2['Value'].isin(df1['Value'])]
+
+    # Update the first DataFrame with matched rows
+    for index, row in df1.iterrows():
+        if row['Value'] in matched_rows['Value'].values:
+            matched_row = matched_rows[matched_rows['Value'] == row['Value']]
+            df1.loc[index, matched_row.columns] = matched_row.values[0]
+
+    # Save the updated file
+    df1.to_csv('updated_file1.csv', index=False)
+
+    print("File updated successfully. Saved as 'updated_file1.csv'.")
