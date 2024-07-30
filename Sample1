@@ -1,6 +1,18 @@
 import pandas as pd
 
+def flatten_list(nested_list):
+    """Flatten a list of lists into a single list."""
+    return [item for sublist in nested_list for item in sublist]
+
 def replace_values_and_combine(file_path, values_to_find, replacement_values):
+    # Flatten the lists
+    flattened_values_to_find = flatten_list(values_to_find)
+    flattened_replacement_values = flatten_list(replacement_values)
+    
+    # Check if lengths of flattened lists match
+    if len(flattened_values_to_find) != len(flattened_replacement_values):
+        raise ValueError("The lengths of flattened values_to_find and replacement_values must be the same")
+    
     # Read the CSV file into a DataFrame
     df = pd.read_csv(file_path)
     
@@ -8,26 +20,22 @@ def replace_values_and_combine(file_path, values_to_find, replacement_values):
     if df.empty or df.shape[1] == 0:
         raise ValueError("The CSV file is empty or does not have any columns")
     
-    # Check if lengths of values_to_find and replacement_values match
-    if len(values_to_find) != len(replacement_values):
-        raise ValueError("The lengths of values_to_find and replacement_values must be the same")
-    
     # Get the first column of the DataFrame
     first_column = df.iloc[:, 0]
     
-    # Create a set to collect replacement values
-    replacement_set = set(replacement_values)
+    # Create a dictionary to map old values to new values
+    replacement_dict = dict(zip(flattened_values_to_find, flattened_replacement_values))
     
     # Replace values in the first column
     updated_column = []
     for value in first_column:
-        if value in values_to_find:
-            updated_column.append(None)  # Replace old values with None temporarily
+        if value in replacement_dict:
+            updated_column.append(replacement_dict[value])
         else:
             updated_column.append(value)
     
     # Combine all new values into one cell
-    combined_new_value = ', '.join(replacement_set)
+    combined_new_value = ', '.join(flattened_replacement_values)
     
     # Update the first row with the combined new value
     df.iloc[0, 0] = combined_new_value
@@ -39,7 +47,7 @@ def replace_values_and_combine(file_path, values_to_find, replacement_values):
 
 # Example usage
 file_path = 'path/to/your/file.csv'
-values_to_find = ['old_value1', 'old_value2']
-replacement_values = ['new_value1', 'new_value2']
+values_to_find = [['old_value1', 'old_value2'], ['old_value3']]
+replacement_values = [['new_value1', 'new_value2'], ['new_value3']]
 
 replace_values_and_combine(file_path, values_to_find, replacement_values)
