@@ -1,18 +1,6 @@
 import pandas as pd
 
-def flatten_list(nested_list):
-    """Flatten a list of lists into a single list."""
-    return [item for sublist in nested_list for item in sublist]
-
-def replace_values_and_combine(file_path, values_to_find, replacement_values):
-    # Flatten the lists
-    flattened_values_to_find = flatten_list(values_to_find)
-    flattened_replacement_values = flatten_list(replacement_values)
-    
-    # Check if lengths of flattened lists match
-    if len(flattened_values_to_find) != len(flattened_replacement_values):
-        raise ValueError("The lengths of flattened values_to_find and replacement_values must be the same")
-    
+def replace_value_with_list(file_path, value_to_replace, replacement_list):
     # Read the CSV file into a DataFrame
     df = pd.read_csv(file_path)
     
@@ -20,34 +8,21 @@ def replace_values_and_combine(file_path, values_to_find, replacement_values):
     if df.empty or df.shape[1] == 0:
         raise ValueError("The CSV file is empty or does not have any columns")
     
-    # Get the first column of the DataFrame
-    first_column = df.iloc[:, 0]
-    
-    # Create a dictionary to map old values to new values
-    replacement_dict = dict(zip(flattened_values_to_find, flattened_replacement_values))
-    
-    # Replace values in the first column
-    updated_column = []
-    for value in first_column:
-        if value in replacement_dict:
-            updated_column.append(replacement_dict[value])
-        else:
-            updated_column.append(value)
-    
-    # Combine all new values into one cell
-    combined_new_value = ', '.join(flattened_replacement_values)
-    
-    # Update the first row with the combined new value
-    df.iloc[0, 0] = combined_new_value
-    
-    # Save the modified DataFrame back to a CSV file
-    df.to_csv(file_path, index=False)
-    
-    print(f"Updated the first row with combined new values: '{combined_new_value}'")
+    # Check if the value_to_replace is in the first column
+    if df.iloc[:, 0].isin([value_to_replace]).any():
+        # Replace occurrences of value_to_replace with the replacement list
+        df.iloc[:, 0] = df.iloc[:, 0].replace(value_to_replace, ', '.join(replacement_list))
+        
+        # Save the modified DataFrame back to a CSV file
+        df.to_csv(file_path, index=False)
+        
+        print(f"Replaced '{value_to_replace}' with {replacement_list} in the first column.")
+    else:
+        print(f"Value '{value_to_replace}' not found in the first column.")
 
 # Example usage
 file_path = 'path/to/your/file.csv'
-values_to_find = [['old_value1', 'old_value2'], ['old_value3']]
-replacement_values = [['new_value1', 'new_value2'], ['new_value3']]
+value_to_replace = 'n'
+replacement_list = ['ab', 'gh', 'hiy', 'ljy', 'h']
 
-replace_values_and_combine(file_path, values_to_find, replacement_values)
+replace_value_with_list(file_path, value_to_replace, replacement_list)
