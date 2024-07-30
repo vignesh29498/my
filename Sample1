@@ -1,0 +1,53 @@
+import csv
+
+# File name
+filename = 'empty_file.csv'
+
+# Create an empty CSV file
+with open(filename, mode='w', newline='') as file:
+    writer = csv.writer(file)
+    # No headers or rows written
+
+print(f"Empty CSV file '{filename}' created successfully.")
+
+
+
+import csv
+
+# File name
+filename = 'empty_file.csv'
+
+# Specify the column and the rows where you want to write
+# Example: rows = [3, 5], names = ['SpecialName1', 'SpecialName2'], column = 2
+rows = [3, 5]  # 0-based index for rows
+names = ['SpecialName1', 'SpecialName2']
+column = 2  # 0-based index for the column
+
+# Read the existing data (if any)
+data = []
+try:
+    with open(filename, mode='r', newline='') as file:
+        reader = csv.reader(file)
+        data = list(reader)
+except FileNotFoundError:
+    # If file not found, initialize an empty list
+    pass
+
+# Ensure the data list has enough rows
+max_row = max(rows)
+while len(data) <= max_row:
+    data.append([])
+
+# Modify the specific cells
+for row_num, name in zip(rows, names):
+    # Ensure the specified row has enough columns
+    while len(data[row_num]) <= column:
+        data[row_num].append('')
+    data[row_num][column] = name
+
+# Write the data back to the CSV
+with open(filename, mode='w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerows(data)
+
+print(f"Updated '{filename}' with specified names in column {column + 1} at specified rows.")
