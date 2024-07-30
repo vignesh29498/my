@@ -38,3 +38,27 @@ else:
     df1_updated.to_csv('updated_file1.csv', index=False)
 
     print("File updated successfully. Saved as 'updated_file1.csv'.")
+
+
+
+import pandas as pd
+
+# File name
+filename = 'file.csv'  # Replace with your CSV file name
+
+# Read the CSV file
+try:
+    df = pd.read_csv(filename)  # Load the CSV file
+
+    # Extract values from the first column
+    first_column_values = df.iloc[:, 0].tolist()  # Values from the first column
+
+    # Extract row positions (indices)
+    row_positions = df.index.tolist()  # Row positions as a list
+
+    print("First column values:", first_column_values)
+    print("Row positions:", row_positions)
+except FileNotFoundError:
+    print(f"File '{filename}' not found.")
+except Exception as e:
+    print(f"An error occurred: {e}")
