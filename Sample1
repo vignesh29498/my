@@ -56,11 +56,11 @@ print(f"Updated '{filename}' with specified names in column {column + 1} at spec
 import pandas as pd
 
 # File name
-filename = 'example.xlsx'
+filename = 'example.csv'
 
-# Read the Excel file
+# Read the CSV file
 try:
-    df = pd.read_excel(filename, sheet_name=0)  # Load the first sheet
+    df = pd.read_csv(filename)  # Load the CSV file
     first_row = df.iloc[0].tolist()  # Convert the first row to a list
     print("First row as a list:", first_row)
 except FileNotFoundError:
