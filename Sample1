@@ -1,37 +1,26 @@
 import pandas as pd
-import os
 
-def generate_output_filename(input_filename):
-    base, ext = os.path.splitext(input_filename)
-    return f"output_{base}{ext}"
+# Read the CSV file
+df = pd.read_csv(r'Full_ICD_4_Files.csv')
 
-# Load the existing CSV file
-input_file = 'abc.csv'
-df = pd.read_csv(input_file)
+# Specify the column name, list of names, and their respective row indices
+coloum = 'Field'
+final_list = ['CSI_ID', 'SWPBALS-D-RATE-10AM-FED', 'UNIQUE_REF_NBR']
+row_indices = [2, 5, 8]
 
-# Perform any operations or modifications on 'df' here if needed
+# Create an empty dataframe with the same columns as the original
+result_df = pd.DataFrame(columns=df.columns)
 
-# Generate the output file name based on the input file name
-output_file = generate_output_filename(os.path.basename(input_file))
-df.to_csv(output_file, index=False)
+# Append matching rows to the result dataframe at specified indices
+for value, row_index in zip(final_list, row_indices):
+    matching_row = df[df[coloum] == value]
+    if not matching_row.empty:
+        result_df = pd.concat([result_df, matching_row])
+        result_df.index = result_df.index[:-1].tolist() + [row_index]
 
-print(f"New CSV file '{output_file}' has been created.")
+# Sort and save the result dataframe
+result_df = result_df.sort_index()
+output_file = '1.csv'
+result_df.to_csv(output_file, index=False)
 
-
-import csv
-
-# Define your list
-data_list = ['item1', 'item2', 'item3', 'item4']
-
-# Specify the CSV file path
-csv_file = 'example.csv'
-
-# Open the CSV file in write mode
-with open(csv_file, 'w', newline='') as file:
-    writer = csv.writer(file)
-    
-    # Write each item in the list to the first column
-    for item in data_list:
-        writer.writerow([item])
-
-print(f"List written to '{csv_file}' successfully.")
+print("done", output_file)
