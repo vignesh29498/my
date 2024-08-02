@@ -1,51 +1,41 @@
 import pandas as pd
 
-# Read the CSV file
-df = pd.read_csv(r'Full_ICD_4_Files.csv')
+# Load the full database CSV file
+db_file_path = '/path/to/full_db.csv'
+db_df = pd.read_csv(db_file_path)
 
-# Specify the column name, list of names, and their respective row indices
-coloum = 'Field'
-final_list = ['CSI_ID', 'SWPBALS-D-RATE-10AM-FED', 'UNIQUE_REF_NBR']
-row_indices = [2, 5, 8]
+# Load the new sheet CSV file
+new_sheet_file_path = '/path/to/new_sheet.csv'
+new_sheet_df = pd.read_csv(new_sheet_file_path)
 
-# Create an empty dataframe with the same columns as the original
-result_df = pd.DataFrame(columns=df.columns)
+# List of values to match (replace with your list of 25 values)
+values_list = ['value1', 'value2', 'value3', 'value4', 'value5', 
+               'value6', 'value7', 'value8', 'value9', 'value10', 
+               'value11', 'value12', 'value13', 'value14', 'value15', 
+               'value16', 'value17', 'value18', 'value19', 'value20', 
+               'value21', 'value22', 'value23', 'value24', 'value25']
 
-# Append matching rows to the result dataframe at specified indices
-for value, row_index in zip(final_list, row_indices):
-    matching_row = df[df[coloum] == value]
-    if not matching_row.empty:
-        result_df = pd.concat([result_df, matching_row])
-        result_df.index = result_df.index[:-1].tolist() + [row_index]
+# Create an empty list to store the results
+results = []
 
-# Sort and save the result dataframe
-result_df = result_df.sort_index()
-output_file = '1.csv'
-result_df.to_csv(output_file, index=False)
+# Iterate over the list of values and find matching rows or note "not found"
+for value in values_list:
+    if value in new_sheet_df.iloc[:, 0].values:
+        matched_row = db_df[db_df.iloc[:, 0] == value]
+        if not matched_row.empty:
+            results.append(matched_row)
+        else:
+            not_found_row = pd.DataFrame([[value, 'not found'] + [''] * (db_df.shape[1] - 2)], columns=db_df.columns)
+            results.append(not_found_row)
+    else:
+        not_found_row = pd.DataFrame([[value, 'not found'] + [''] * (db_df.shape[1] - 2)], columns=db_df.columns)
+        results.append(not_found_row)
 
-print("done", output_file)
+# Concatenate the results into a single DataFrame
+final_df = pd.concat(results, ignore_index=True)
 
+# Save the final DataFrame to a new CSV file
+output_file_path = '/path/to/output_matched_rows.csv'
+final_df.to_csv(output_file_path, index=False)
 
-import pandas as pd
-
-# Read the CSV file
-df = pd.read_csv(r'Full_ICD_4_Files.csv')
-
-# Specify the column name and list of names
-coloum = 'Field'
-final_list = ['CSI_ID', 'SWPBALS-D-RATE-10AM-FED', 'UNIQUE_REF_NBR', 'CSI_ID']  # Example list with duplicates
-
-# Create an empty dataframe with the same columns as the original
-result_df = pd.DataFrame(columns=df.columns)
-
-# Append matching rows to the result dataframe based on the final_list
-for value in final_list:
-    matching_row = df[df[coloum] == value]
-    if not matching_row.empty:
-        result_df = pd.concat([result_df, matching_row])
-
-# Save the result to a new CSV file
-output_file = '1.csv'
-result_df.to_csv(output_file, index=False)
-
-print("done", output_file)
+print(f'Matched rows have been written to "{output_file_path}".')
