@@ -1,18 +1,37 @@
 import pandas as pd
+import os
 
-# Load both CSV files
-csv1 = pd.read_csv('path_to_csv1.csv')
-csv2 = pd.read_csv('path_to_csv2.csv')
+def generate_output_filename(input_filename):
+    base, ext = os.path.splitext(input_filename)
+    return f"output_{base}{ext}"
 
-# Print column names to ensure they match
-print("CSV1 Columns:", csv1.columns)
-print("CSV2 Columns:", csv2.columns)
+# Load the existing CSV file
+input_file = 'abc.csv'
+df = pd.read_csv(input_file)
 
-# Assuming the correct label column name is 'Label' (adjust this if necessary)
-label_column_name = 'Label'  # Replace 'Label' with the actual column name if different
+# Perform any operations or modifications on 'df' here if needed
 
-# Merge the two dataframes on the common label column
-merged_df = pd.merge(csv1, csv2, on=label_column_name, how='left')
+# Generate the output file name based on the input file name
+output_file = generate_output_filename(os.path.basename(input_file))
+df.to_csv(output_file, index=False)
 
-# Overwrite the first CSV with the merged dataframe
-merged_df.to_csv('path_to_csv1.csv', index=False)
+print(f"New CSV file '{output_file}' has been created.")
+
+
+import csv
+
+# Define your list
+data_list = ['item1', 'item2', 'item3', 'item4']
+
+# Specify the CSV file path
+csv_file = 'example.csv'
+
+# Open the CSV file in write mode
+with open(csv_file, 'w', newline='') as file:
+    writer = csv.writer(file)
+    
+    # Write each item in the list to the first column
+    for item in data_list:
+        writer.writerow([item])
+
+print(f"List written to '{csv_file}' successfully.")
