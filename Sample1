@@ -24,3 +24,28 @@ output_file = '1.csv'
 result_df.to_csv(output_file, index=False)
 
 print("done", output_file)
+
+
+import pandas as pd
+
+# Read the CSV file
+df = pd.read_csv(r'Full_ICD_4_Files.csv')
+
+# Specify the column name and list of names
+coloum = 'Field'
+final_list = ['CSI_ID', 'SWPBALS-D-RATE-10AM-FED', 'UNIQUE_REF_NBR', 'CSI_ID']  # Example list with duplicates
+
+# Create an empty dataframe with the same columns as the original
+result_df = pd.DataFrame(columns=df.columns)
+
+# Append matching rows to the result dataframe based on the final_list
+for value in final_list:
+    matching_row = df[df[coloum] == value]
+    if not matching_row.empty:
+        result_df = pd.concat([result_df, matching_row])
+
+# Save the result to a new CSV file
+output_file = '1.csv'
+result_df.to_csv(output_file, index=False)
+
+print("done", output_file)
