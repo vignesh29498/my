@@ -1,41 +1,62 @@
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+import numpy as np
 
-# Load the full database CSV file
-db_file_path = '/path/to/full_db.csv'
-db_df = pd.read_csv(db_file_path)
+# Load the dataset
+data = pd.read_csv('sample_dataset.csv')
 
-# Load the new sheet CSV file
-new_sheet_file_path = '/path/to/new_sheet.csv'
-new_sheet_df = pd.read_csv(new_sheet_file_path)
+# Split dataset into name-related and age-related parts
+name_data = data[data['Label'] == 'Name']
+age_data = data[data['Label'] == 'Age']
 
-# List of values to match (replace with your list of 25 values)
-values_list = ['value1', 'value2', 'value3', 'value4', 'value5', 
-               'value6', 'value7', 'value8', 'value9', 'value10', 
-               'value11', 'value12', 'value13', 'value14', 'value15', 
-               'value16', 'value17', 'value18', 'value19', 'value20', 
-               'value21', 'value22', 'value23', 'value24', 'value25']
+# Prepare name-related data
+name_labels = name_data['Name'].values
+name_values = name_data['Age'].values.reshape(-1, 1)
 
-# Create an empty list to store the results
-results = []
+# Prepare age-related data
+age_labels = age_data['Age'].values
+age_values = age_data['Name'].values.reshape(-1, 1)
 
-# Iterate over the list of values and find matching rows or note "not found"
-for value in values_list:
-    if value in new_sheet_df.iloc[:, 0].values:
-        matched_row = db_df[db_df.iloc[:, 0] == value]
-        if not matched_row.empty:
-            results.append(matched_row)
-        else:
-            not_found_row = pd.DataFrame([[value, 'not found'] + [''] * (db_df.shape[1] - 2)], columns=db_df.columns)
-            results.append(not_found_row)
-    else:
-        not_found_row = pd.DataFrame([[value, 'not found'] + [''] * (db_df.shape[1] - 2)], columns=db_df.columns)
-        results.append(not_found_row)
+# Convert labels to categorical
+name_label_dict = {label: i for i, label in enumerate(np.unique(name_labels))}
+inverse_name_label_dict = {i: label for label, i in name_label_dict.items()}
+categorical_name_labels = np.array([name_label_dict[label] for label in name_labels])
 
-# Concatenate the results into a single DataFrame
-final_df = pd.concat(results, ignore_index=True)
+age_label_dict = {label: i for i, label in enumerate(np.unique(age_labels))}
+inverse_age_label_dict = {i: label for label, i in age_label_dict.items()}
+categorical_age_labels = np.array([age_label_dict[label] for label in age_labels])
 
-# Save the final DataFrame to a new CSV file
-output_file_path = '/path/to/output_matched_rows.csv'
-final_df.to_csv(output_file_path, index=False)
+# Split the data for names
+X_train_name, X_val_name, y_train_name, y_val_name = train_test_split(name_values, categorical_name_labels, test_size=0.2, random_state=42)
 
-print(f'Matched rows have been written to "{output_file_path}".')
+# Split the data for ages
+X_train_age, X_val_age, y_train_age, y_val_age = train_test_split(age_values, categorical_age_labels, test_size=0.2, random_state=42)
+
+# Define and train the model for names
+knn_name = KNeighborsClassifier(n_neighbors=3)
+knn_name.fit(X_train_name, y_train_name)
+
+# Define and train the model for ages
+knn_age = KNeighborsClassifier(n_neighbors=3)
+knn_age.fit(X_train_age, y_train_age)
+
+# Function to predict labels for each value in the list
+def predict_labels(input_list):
+    predictions = []
+    for value in input_list:
+        if isinstance(value, str):  # Assume string values are names
+            value_array = np.array([value]).reshape(-1, 1)
+            predicted_label_index = knn_name.predict(value_array)[0]
+            predicted_label = inverse_name_label_dict[predicted_label_index]
+        else:  # Assume numeric values are ages
+            value_array = np.array([value]).reshape(-1, 1)
+            predicted_label_index = knn_age.predict(value_array)[0]
+            predicted_label = inverse_age_label_dict[predicted_label_index]
+        predictions.append(predicted_label)
+    return predictions
+
+# Example usage
+input_list = ['Dinesh', 76, 'Vignesh', 45]
+predicted_labels = predict_labels(input_list)
+print(f'The predicted labels are: {predicted_labels}')
