@@ -6,15 +6,15 @@ import joblib
 import re
 
 # Function to load and preprocess data
-def load_data(file_path, id_column, name_column, priority_columns):
+def load_data(file_path, priority_columns):
     df = pd.read_csv(file_path)
     df['Combined'] = df[priority_columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
-    return df, id_column, name_column
+    return df
 
 # Training the Naive Bayes model
-def train_model(df, id_column):
+def train_model(df):
     model = make_pipeline(TfidfVectorizer(), MultinomialNB())
-    model.fit(df['Combined'], df[id_column])
+    model.fit(df['Combined'], df.index)
     return model
 
 # Save the model
@@ -30,38 +30,36 @@ def preprocess_input(sentence):
     sentence = re.sub(r'\W+', ' ', sentence).lower()
     return sentence
 
-# Function to predict the ID and Name using the trained model
-def predict(model, sentence, df, id_column, name_column):
+# Function to predict the full row using the trained model
+def predict(model, sentence, df):
     preprocessed_sentence = preprocess_input(sentence)
-    predicted_id = model.predict([preprocessed_sentence])[0]
-    predicted_name = df.loc[df[id_column] == predicted_id, name_column].values[0]
-    return predicted_id, predicted_name
+    predicted_index = model.predict([preprocessed_sentence])[0]
+    full_row = df.iloc[predicted_index]
+    return full_row
 
 # Main function to execute the workflow
-def main(file_path, id_column, name_column, priority_columns, model_path, input_sentence):
+def main(file_path, priority_columns, model_path, input_sentence):
     # Load and preprocess data
-    df, id_column, name_column = load_data(file_path, id_column, name_column, priority_columns)
+    df = load_data(file_path, priority_columns)
 
     # Train the model and save it
-    nb_model = train_model(df, id_column)
+    nb_model = train_model(df)
     save_model(nb_model, model_path)
 
     # Load the model
     loaded_model = load_model(model_path)
 
     # Perform prediction using the loaded model
-    predicted_id, predicted_name = predict(loaded_model, input_sentence, df, id_column, name_column)
+    full_row = predict(loaded_model, input_sentence, df)
 
     # Display results
-    print(f"Predicted ID: {predicted_id}, Predicted Name: {predicted_name}")
+    print(f"Predicted row:\n{full_row}")
 
 # Parameters
 file_path = 'your_training_data.csv'  # Replace with your CSV file path
-id_column = 'ID'  # Replace with your ID column name
-name_column = 'Name'  # Replace with your Name column name
 priority_columns = ['Description', 'Keywords']  # Replace with your column names
 model_path = 'naive_bayes_model.pkl'
 input_sentence = "I need a small versatile tool for everyday use."
 
 # Run the main function
-main(file_path, id_column, name_column, priority_columns, model_path, input_sentence)
+main(file_path, priority_columns, model_path, input_sentence)
