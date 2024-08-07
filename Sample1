@@ -39,4 +39,21 @@ def find_similar_row(new_sentence, model, vectorizer, priority_columns, weight=2
     def combine_new_text(sentence, priority_columns, weight):
         text = []
         for col in priority_columns:
-            text
+            text.append(' '.join([sentence] * weight))  # Give more weight to priority columns
+        return ' '.join(text)
+
+    new_sentence_combined = combine_new_text(new_sentence, priority_columns, weight)
+    
+    # Transform the new sentence
+    new_X = vectorizer.transform([new_sentence_combined])
+    
+    # Find the nearest neighbor
+    distances, indices = model.kneighbors(new_X)
+    
+    # Return the entire row of the most similar line
+    return df.iloc[indices[0][0]]
+
+# Example usage
+new_sentence = "Your new input sentence"
+similar_row = find_similar_row(new_sentence, model, vectorizer, priority_columns)
+print(f'The most similar row is:\n{similar_row}')
