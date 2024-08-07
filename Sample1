@@ -5,45 +5,6 @@ from sklearn.neighbors import NearestNeighbors
 # Load the CSV report
 df = pd.read_csv('report.csv')
 
-# Assume the CSV has a column 'text' containing sentences
-texts = df['text'].tolist()
-
-# Initialize TF-IDF Vectorizer
-vectorizer = TfidfVectorizer(max_features=100, stop_words='english')
-
-# Fit and transform the texts
-X = vectorizer.fit_transform(texts)
-
-# Initialize and train the Nearest Neighbors model
-model = NearestNeighbors(n_neighbors=1, metric='cosine')
-model.fit(X)
-
-# Function to find the most similar line
-def find_similar_line(new_sentence, model, vectorizer, texts):
-    # Transform the new sentence
-    new_X = vectorizer.transform([new_sentence])
-    
-    # Find the nearest neighbor
-    distances, indices = model.kneighbors(new_X)
-    
-    # Return the most similar line
-    return texts[indices[0][0]]
-
-# Example usage
-new_sentence = "Your new input sentence"
-similar_line = find_similar_line(new_sentence, model, vectorizer, texts)
-print(f'The most similar line is: {similar_line}')
-
-
-
-
-import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.neighbors import NearestNeighbors
-
-# Load the CSV report
-df = pd.read_csv('report.csv')
-
 # Specify priority columns
 priority_columns = ['priority_column_1', 'priority_column_2']  # Replace with actual column names
 
@@ -51,10 +12,11 @@ priority_columns = ['priority_column_1', 'priority_column_2']  # Replace with ac
 def combine_text(row, priority_columns, weight=2):
     text = []
     for col in df.columns:
+        value = str(row[col])  # Ensure the value is a string
         if col in priority_columns:
-            text.append(' '.join([row[col]] * weight))  # Give more weight to priority columns
+            text.append(' '.join([value] * weight))  # Give more weight to priority columns
         else:
-            text.append(row[col])
+            text.append(value)
     return ' '.join(text)
 
 df['combined_text'] = df.apply(combine_text, priority_columns=priority_columns, axis=1)
@@ -77,21 +39,4 @@ def find_similar_row(new_sentence, model, vectorizer, priority_columns, weight=2
     def combine_new_text(sentence, priority_columns, weight):
         text = []
         for col in priority_columns:
-            text.append(' '.join([sentence] * weight))  # Give more weight to priority columns
-        return ' '.join(text)
-
-    new_sentence_combined = combine_new_text(new_sentence, priority_columns, weight)
-    
-    # Transform the new sentence
-    new_X = vectorizer.transform([new_sentence_combined])
-    
-    # Find the nearest neighbor
-    distances, indices = model.kneighbors(new_X)
-    
-    # Return the entire row of the most similar line
-    return df.iloc[indices[0][0]]
-
-# Example usage
-new_sentence = "Your new input sentence"
-similar_row = find_similar_row(new_sentence, model, vectorizer, priority_columns)
-print(f'The most similar row is:\n{similar_row}')
+            text
