@@ -1,69 +1,61 @@
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import make_pipeline
+import joblib
 import re
-import numpy as np
-import spacy
-
-# Load the spaCy language model
-nlp = spacy.load('en_core_web_sm')
 
 # Read the CSV file
-file_path = 'your_training_data.csv'
+file_path = 'your_training_data.csv'  # Replace with your CSV file path
 df = pd.read_csv(file_path)
 
 # Priority columns
 priority_columns = ['Description', 'Keywords']
 
+# Combine priority columns into a single text column for training
+df['Combined'] = df[priority_columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
+
+# Training the Naive Bayes model
+def train_model(df):
+    model = make_pipeline(TfidfVectorizer(), MultinomialNB())
+    model.fit(df['Combined'], df['ID'])
+    return model
+
+# Save the model
+def save_model(model, model_path):
+    joblib.dump(model, model_path)
+
+# Load the model
+def load_model(model_path):
+    return joblib.load(model_path)
+
+# Function to preprocess input sentence
+def preprocess_input(sentence):
+    sentence = re.sub(r'\W+', ' ', sentence).lower()
+    return sentence
+
+# Function to predict the ID and Name using the trained model
+def predict(model, sentence, df):
+    preprocessed_sentence = preprocess_input(sentence)
+    predicted_id = model.predict([preprocessed_sentence])[0]
+    predicted_name = df.loc[df['ID'] == predicted_id, 'Name'].values[0]
+    return predicted_id, predicted_name
+
+# Paths to save the model
+model_path = 'naive_bayes_model.pkl'
+
+# Train the model and save it
+nb_model = train_model(df)
+save_model(nb_model, model_path)
+
+# Load the model
+loaded_model = load_model(model_path)
+
 # Sample input sentence
 input_sentence = "I need a small versatile tool for everyday use."
 
-# Function to extract keywords
-def extract_keywords(sentence):
-    sentence = re.sub(r'\W+', ' ', sentence).lower()
-    return sentence.split()
-
-# Extracted keywords from input sentence
-input_keywords = extract_keywords(input_sentence)
-
-# Approach 1: Simple Keyword Matching
-def simple_keyword_matching(df, input_keywords, priority_columns):
-    for idx, row in df.iterrows():
-        for col in priority_columns:
-            text = re.sub(r'\W+', ' ', str(row[col])).lower()
-            if any(keyword in text for keyword in input_keywords):
-                return row['ID'], row['Name']
-    return None, None
-
-# Approach 2: TF-IDF Vectorization
-def tfidf_matching(df, input_sentence, priority_columns):
-    combined_texts = df[priority_columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
-    vectorizer = TfidfVectorizer().fit_transform(combined_texts)
-    input_vec = TfidfVectorizer().fit(combined_texts).transform([input_sentence])
-    cosine_similarities = cosine_similarity(vectorizer, input_vec).flatten()
-    best_match_idx = np.argmax(cosine_similarities)
-    return df.iloc[best_match_idx]['ID'], df.iloc[best_match_idx]['Name']
-
-# Approach 3: Semantic Similarity
-def semantic_similarity(df, input_sentence, priority_columns):
-    input_doc = nlp(input_sentence)
-    best_score = -1
-    best_id, best_name = None, None
-    for idx, row in df.iterrows():
-        for col in priority_columns:
-            row_doc = nlp(str(row[col]))
-            similarity_score = input_doc.similarity(row_doc)
-            if similarity_score > best_score:
-                best_score = similarity_score
-                best_id, best_name = row['ID'], row['Name']
-    return best_id, best_name
-
-# Perform matching using all approaches
-id_simple, name_simple = simple_keyword_matching(df, input_keywords, priority_columns)
-id_tfidf, name_tfidf = tfidf_matching(df, input_sentence, priority_columns)
-id_semantic, name_semantic = semantic_similarity(df, input_sentence, priority_columns)
+# Perform prediction using the loaded model
+predicted_id, predicted_name = predict(loaded_model, input_sentence, df)
 
 # Display results
-print(f"Simple Keyword Matching: Matched ID = {id_simple}, Name = {name_simple}")
-print(f"TF-IDF Matching: Matched ID = {id_tfidf}, Name = {name_tfidf}")
-print(f"Semantic Similarity Matching: Matched ID = {id_semantic}, Name = {name_semantic}")
+print(f"Predicted ID: {predicted_id}, Predicted Name: {predicted_name}")
