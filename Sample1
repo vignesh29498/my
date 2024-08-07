@@ -1,74 +1,35 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
-import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.neighbors import NearestNeighbors
 
-# Load the dataset
-data = pd.read_csv('sample_dataset.csv', header=None)
+# Load the CSV report
+df = pd.read_csv('report.csv')
 
-# Transpose the data to have a consistent format
-data = data.transpose()
-data.columns = data.iloc[0]
-data = data[1:]
+# Assume the CSV has a column 'text' containing sentences
+texts = df['text'].tolist()
 
-# Melt the dataframe to have a long format
-data = data.melt(var_name='Label', value_name='Value')
+# Initialize TF-IDF Vectorizer
+vectorizer = TfidfVectorizer(max_features=100, stop_words='english')
 
-# Remove NaN values
-data = data.dropna()
+# Fit and transform the texts
+X = vectorizer.fit_transform(texts)
 
-# Separate data by labels
-label_groups = data.groupby('Label')
+# Initialize and train the Nearest Neighbors model
+model = NearestNeighbors(n_neighbors=1, metric='cosine')
+model.fit(X)
 
-models = {}
-label_encodings = {}
-inverse_label_encodings = {}
-
-# Train a KNN model for each label type
-for label, group in label_groups:
-    values = group['Value'].values.reshape(-1, 1)
+# Function to find the most similar line
+def find_similar_line(new_sentence, model, vectorizer, texts):
+    # Transform the new sentence
+    new_X = vectorizer.transform([new_sentence])
     
-    # Convert values to categorical if needed (this assumes values are already suitable for model input)
-    value_dict = {val[0]: i for i, val in enumerate(np.unique(values))}
-    inverse_value_dict = {i: val[0] for val, i in value_dict.items()}
+    # Find the nearest neighbor
+    distances, indices = model.kneighbors(new_X)
     
-    categorical_values = np.array([value_dict[val[0]] for val in values])
-    
-    # Encode labels
-    label_encodings[label] = value_dict
-    inverse_label_encodings[label] = inverse_value_dict
-    
-    # Train-test split
-    X_train, X_val, y_train, y_val = train_test_split(values, categorical_values, test_size=0.2, random_state=42)
-    
-    # Train the model
-    knn = KNeighborsClassifier(n_neighbors=1)  # Using 1 neighbor for exact matching
-    knn.fit(X_train, y_train)
-    
-    models[label] = knn
-
-# Function to predict labels for each value in the list
-def predict_labels(input_list):
-    predictions = []
-    for idx, value in enumerate(input_list):
-        found = False
-        for label, model in models.items():
-            value_array = np.array([[value]])
-            try:
-                predicted_index = model.predict(value_array)[0]
-                predicted_label = inverse_label_encodings[label][predicted_index]
-                predictions.append((idx, label))
-                found = True
-                break
-            except:
-                continue
-        if not found:
-            predictions.append((idx, 'Unknown'))
-    return predictions
+    # Return the most similar line
+    return texts[indices[0][0]]
 
 # Example usage
-input_list = ['655', 'ml', '086', 'gjke']
-predicted_labels_with_positions = predict_labels(input_list)
-
-for idx, label in predicted_labels_with_positions:
-    print(f'Position {idx}: Predicted label is {label}')
+new_sentence = "Your new input sentence"
+similar_line = find_similar_line(new_sentence, model, vectorizer, texts)
+print(f'The most similar line is: {similar_line}')
