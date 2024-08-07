@@ -1,59 +1,69 @@
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.neighbors import NearestNeighbors
+from sklearn.metrics.pairwise import cosine_similarity
+import re
+import numpy as np
+import spacy
 
-# Load the CSV report
-df = pd.read_csv('report.csv')
+# Load the spaCy language model
+nlp = spacy.load('en_core_web_sm')
 
-# Specify priority columns
-priority_columns = ['priority_column_1', 'priority_column_2']  # Replace with actual column names
+# Read the CSV file
+file_path = 'your_training_data.csv'
+df = pd.read_csv(file_path)
 
-# Combine text from all columns, giving more weight to priority columns
-def combine_text(row, priority_columns, weight=2):
-    text = []
-    for col in df.columns:
-        value = str(row[col])  # Ensure the value is a string
-        if col in priority_columns:
-            text.append(' '.join([value] * weight))  # Give more weight to priority columns
-        else:
-            text.append(value)
-    return ' '.join(text)
+# Priority columns
+priority_columns = ['Description', 'Keywords']
 
-df['combined_text'] = df.apply(combine_text, priority_columns=priority_columns, axis=1)
+# Sample input sentence
+input_sentence = "I need a small versatile tool for everyday use."
 
-texts = df['combined_text'].tolist()
+# Function to extract keywords
+def extract_keywords(sentence):
+    sentence = re.sub(r'\W+', ' ', sentence).lower()
+    return sentence.split()
 
-# Initialize TF-IDF Vectorizer
-vectorizer = TfidfVectorizer(max_features=100, stop_words='english')
+# Extracted keywords from input sentence
+input_keywords = extract_keywords(input_sentence)
 
-# Fit and transform the texts
-X = vectorizer.fit_transform(texts)
-
-# Initialize and train the Nearest Neighbors model
-model = NearestNeighbors(n_neighbors=1, metric='cosine')
-model.fit(X)
-
-# Function to find the most similar row
-def find_similar_row(new_sentence, model, vectorizer, priority_columns, weight=2):
-    # Combine the new sentence giving more weight to priority columns
-    def combine_new_text(sentence, priority_columns, weight):
-        text = []
+# Approach 1: Simple Keyword Matching
+def simple_keyword_matching(df, input_keywords, priority_columns):
+    for idx, row in df.iterrows():
         for col in priority_columns:
-            text.append(' '.join([sentence] * weight))  # Give more weight to priority columns
-        return ' '.join(text)
+            text = re.sub(r'\W+', ' ', str(row[col])).lower()
+            if any(keyword in text for keyword in input_keywords):
+                return row['ID'], row['Name']
+    return None, None
 
-    new_sentence_combined = combine_new_text(new_sentence, priority_columns, weight)
-    
-    # Transform the new sentence
-    new_X = vectorizer.transform([new_sentence_combined])
-    
-    # Find the nearest neighbor
-    distances, indices = model.kneighbors(new_X)
-    
-    # Return the entire row of the most similar line
-    return df.iloc[indices[0][0]]
+# Approach 2: TF-IDF Vectorization
+def tfidf_matching(df, input_sentence, priority_columns):
+    combined_texts = df[priority_columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
+    vectorizer = TfidfVectorizer().fit_transform(combined_texts)
+    input_vec = TfidfVectorizer().fit(combined_texts).transform([input_sentence])
+    cosine_similarities = cosine_similarity(vectorizer, input_vec).flatten()
+    best_match_idx = np.argmax(cosine_similarities)
+    return df.iloc[best_match_idx]['ID'], df.iloc[best_match_idx]['Name']
 
-# Example usage
-new_sentence = "Your new input sentence"
-similar_row = find_similar_row(new_sentence, model, vectorizer, priority_columns)
-print(f'The most similar row is:\n{similar_row}')
+# Approach 3: Semantic Similarity
+def semantic_similarity(df, input_sentence, priority_columns):
+    input_doc = nlp(input_sentence)
+    best_score = -1
+    best_id, best_name = None, None
+    for idx, row in df.iterrows():
+        for col in priority_columns:
+            row_doc = nlp(str(row[col]))
+            similarity_score = input_doc.similarity(row_doc)
+            if similarity_score > best_score:
+                best_score = similarity_score
+                best_id, best_name = row['ID'], row['Name']
+    return best_id, best_name
+
+# Perform matching using all approaches
+id_simple, name_simple = simple_keyword_matching(df, input_keywords, priority_columns)
+id_tfidf, name_tfidf = tfidf_matching(df, input_sentence, priority_columns)
+id_semantic, name_semantic = semantic_similarity(df, input_sentence, priority_columns)
+
+# Display results
+print(f"Simple Keyword Matching: Matched ID = {id_simple}, Name = {name_simple}")
+print(f"TF-IDF Matching: Matched ID = {id_tfidf}, Name = {name_tfidf}")
+print(f"Semantic Similarity Matching: Matched ID = {id_semantic}, Name = {name_semantic}")
