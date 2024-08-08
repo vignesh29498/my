@@ -4,8 +4,10 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
-import joblib
 import re
+import joblib
+
+
 
 # Function to load and preprocess data
 def load_data(file_path, priority_columns):
@@ -17,6 +19,7 @@ def load_data(file_path, priority_columns):
 def preprocess_input(sentence):
     sentence = re.sub(r'\W+', ' ', sentence).lower()
     return sentence
+
 
 # Function to create and train a TensorFlow model
 def train_tf_model(df):
@@ -46,6 +49,12 @@ def train_tf_model(df):
 
     return model, tokenizer
 
+
+
+
+
+
+
 # Function to save the TensorFlow model and tokenizer
 def save_tf_model(model, model_path, tokenizer):
     model.save(model_path)
@@ -57,6 +66,9 @@ def load_tf_model(model_path):
     tokenizer = joblib.load(model_path.replace('.h5', '_tokenizer.pkl'))
     return model, tokenizer
 
+
+
+
 # Function to predict the row using the loaded model
 def predict(model, tokenizer, sentence, df):
     preprocessed_sentence = preprocess_input(sentence)
@@ -65,6 +77,8 @@ def predict(model, tokenizer, sentence, df):
     predicted_index = np.argmax(model.predict(padded_sequence), axis=-1)[0]
     full_row = df.iloc[predicted_index]
     return full_row
+
+
 
 # Main function to execute the workflow
 def main(file_path, priority_columns, model_path, input_sentence):
