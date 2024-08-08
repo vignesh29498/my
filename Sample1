@@ -7,207 +7,73 @@ from sklearn.model_selection import train_test_split
 import re
 import joblib
 
+# Step 1: Load and preprocess data
+file_path = 'your_training_data.csv'  # Replace with your CSV file path
+priority_columns = ['Description', 'Keywords']  # Replace with your column names
 
-
-# Function to load and preprocess data
-def load_data(file_path, priority_columns):
-    df = pd.read_csv(file_path)
-    df['Combined'] = df[priority_columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
-    return df
+# Load the dataset
+df = pd.read_csv(file_path)
+df['Combined'] = df[priority_columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
+print("Data after combining priority columns:\n", df['Combined'].head())
 
 # Function to preprocess input sentence
 def preprocess_input(sentence):
     sentence = re.sub(r'\W+', ' ', sentence).lower()
     return sentence
 
-
-# Function to create and train a TensorFlow model
-def train_tf_model(df):
-    tokenizer = Tokenizer()
-    tokenizer.fit_on_texts(df['Combined'])
-    X = tokenizer.texts_to_sequences(df['Combined'])
-    X = pad_sequences(X, padding='post')
-
-    y = np.array(df.index)  # Using index as labels for simplicity
-    
-    # Split data into training and validation sets
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    # Define the model architecture
-    model = tf.keras.Sequential([
-        tf.keras.layers.Embedding(input_dim=len(tokenizer.word_index)+1, output_dim=50, input_length=X.shape[1]),
-        tf.keras.layers.GlobalAveragePooling1D(),
-        tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.Dense(len(df), activation='softmax')  # Change output layer activation to softmax
-    ])
-
-    # Compile the model
-    model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-
-    # Train the model
-    model.fit(X_train, y_train, epochs=10, batch_size=16, validation_data=(X_val, y_val))
-
-    return model, tokenizer
-
-
-
-
-import pandas as pd
-import numpy as np
-import tensorflow as tf
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from sklearn.model_selection import train_test_split
-import re
-import joblib
-
-# Function to load and preprocess data
-def load_data(file_path, priority_columns):
-    df = pd.read_csv(file_path)
-    df['Combined'] = df[priority_columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
-    print("Data after combining priority columns:\n", df['Combined'].head())
-    return df
-
-# Function to preprocess input sentence
-def preprocess_input(sentence):
-    sentence = re.sub(r'\W+', ' ', sentence).lower()
-    return sentence
-
-# Function to create and train a TensorFlow model
-def train_tf_model(df):
-    tokenizer = Tokenizer()
-    tokenizer.fit_on_texts(df['Combined'])
-    X = tokenizer.texts_to_sequences(df['Combined'])
-    X = pad_sequences(X, padding='post')
-    print("Tokenized and padded sequences:\n", X[:5])
-
-    y = np.array(df.index)  # Using index as labels for simplicity
-    print("Labels:\n", y[:5])
-    
-    # Split data into training and validation sets
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
-    print("Training set shape:", X_train.shape)
-    print("Validation set shape:", X_val.shape)
-
-    # Define the model architecture
-    model = tf.keras.Sequential([
-        tf.keras.layers.Embedding(input_dim=len(tokenizer.word_index)+1, output_dim=50, input_length=X.shape[1]),
-        tf.keras.layers.GlobalAveragePooling1D(),
-        tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.Dense(len(df), activation='softmax')  # Change output layer activation to softmax
-    ])
-
-    # Compile the model
-    model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-    print("Model summary:")
-    model.summary()
-
-    # Train the model
-    history = model.fit(X_train, y_train, epochs=10, batch_size=16, validation_data=(X_val, y_val))
-    return model, tokenizer, history
-
-# Function to save the TensorFlow model and tokenizer
-def save_tf_model(model, model_path, tokenizer):
-    model.save(model_path)
-    joblib.dump(tokenizer, model_path.replace('.h5', '_tokenizer.pkl'))
-
-# Function to load the TensorFlow model and tokenizer
-def load_tf_model(model_path):
-    model = tf.keras.models.load_model(model_path)
-    tokenizer = joblib.load(model_path.replace('.h5', '_tokenizer.pkl'))
-    return model, tokenizer
-
-# Function to predict the row using the loaded model
-def predict(model, tokenizer, sentence, df):
-    preprocessed_sentence = preprocess_input(sentence)
-    sequence = tokenizer.texts_to_sequences([preprocessed_sentence])
-    padded_sequence = pad_sequences(sequence, padding='post', maxlen=df['Combined'].apply(lambda x: len(x.split())).max())
-    print("Padded sequence for input sentence:\n", padded_sequence)
-    predicted_index = np.argmax(model.predict(padded_sequence), axis=-1)[0]
-    full_row = df.iloc[predicted_index]
-    return full_row
-
-# Main function to execute the workflow
-def main(file_path, priority_columns, model_path, input_sentence):
-    # Load and preprocess data
-    df = load_data(file_path, priority_columns)
-
-    # Train the TensorFlow model and save it
-    tf_model, tokenizer, history = train_tf_model(df)
-    save_tf_model(tf_model, model_path, tokenizer)
-
-    # Load the TensorFlow model
-    loaded_tf_model, loaded_tokenizer = load_tf_model(model_path)
-
-    # Perform prediction using the loaded model
-    full_row = predict(loaded_tf_model, loaded_tokenizer, input_sentence, df)
-
-    # Display results
-    print(f"Predicted row:\n{full_row}")
-
-# Parameters
-file_path = 'your_training_data.csv'  # Replace with your CSV file path
-priority_columns = ['Description', 'Keywords']  # Replace with your column names
-model_path = 'tf_model.h5'
+# Preprocess the input sentence
 input_sentence = "I need a small versatile tool for everyday use."
+preprocessed_sentence = preprocess_input(input_sentence)
+print("Preprocessed input sentence:\n", preprocessed_sentence)
 
-# Run the main function
-main(file_path, priority_columns, model_path, input_sentence)
+# Step 2: Tokenize and pad sequences
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts(df['Combined'])
+X = tokenizer.texts_to_sequences(df['Combined'])
+X = pad_sequences(X, padding='post')
+print("Tokenized and padded sequences:\n", X[:5])
 
+# Convert the labels to a numpy array
+y = np.array(df.index)  # Using index as labels for simplicity
+print("Labels:\n", y[:5])
 
+# Step 3: Split data into training and validation sets
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+print("Training set shape:", X_train.shape)
+print("Validation set shape:", X_val.shape)
 
+# Step 4: Define and train the TensorFlow model
+model = tf.keras.Sequential([
+    tf.keras.layers.Embedding(input_dim=len(tokenizer.word_index)+1, output_dim=50, input_length=X.shape[1]),
+    tf.keras.layers.GlobalAveragePooling1D(),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(len(df), activation='softmax')  # Change output layer activation to softmax
+])
 
+# Compile the model
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+print("Model summary:")
+model.summary()
 
+# Train the model
+history = model.fit(X_train, y_train, epochs=10, batch_size=16, validation_data=(X_val, y_val))
 
-
-# Function to save the TensorFlow model and tokenizer
-def save_tf_model(model, model_path, tokenizer):
-    model.save(model_path)
-    joblib.dump(tokenizer, model_path.replace('.h5', '_tokenizer.pkl'))
-
-# Function to load the TensorFlow model and tokenizer
-def load_tf_model(model_path):
-    model = tf.keras.models.load_model(model_path)
-    tokenizer = joblib.load(model_path.replace('.h5', '_tokenizer.pkl'))
-    return model, tokenizer
-
-
-
-
-# Function to predict the row using the loaded model
-def predict(model, tokenizer, sentence, df):
-    preprocessed_sentence = preprocess_input(sentence)
-    sequence = tokenizer.texts_to_sequences([preprocessed_sentence])
-    padded_sequence = pad_sequences(sequence, padding='post', maxlen=df['Combined'].apply(lambda x: len(x.split())).max())
-    predicted_index = np.argmax(model.predict(padded_sequence), axis=-1)[0]
-    full_row = df.iloc[predicted_index]
-    return full_row
-
-
-
-# Main function to execute the workflow
-def main(file_path, priority_columns, model_path, input_sentence):
-    # Load and preprocess data
-    df = load_data(file_path, priority_columns)
-
-    # Train the TensorFlow model and save it
-    tf_model, tokenizer = train_tf_model(df)
-    save_tf_model(tf_model, model_path, tokenizer)
-
-    # Load the TensorFlow model
-    loaded_tf_model, loaded_tokenizer = load_tf_model(model_path)
-
-    # Perform prediction using the loaded model
-    full_row = predict(loaded_tf_model, loaded_tokenizer, input_sentence, df)
-
-    # Display results
-    print(f"Predicted row:\n{full_row}")
-
-# Parameters
-file_path = 'your_training_data.csv'  # Replace with your CSV file path
-priority_columns = ['Description', 'Keywords']  # Replace with your column names
+# Step 5: Save the model and tokenizer
 model_path = 'tf_model.h5'
-input_sentence = "I need a small versatile tool for everyday use."
+model.save(model_path)
+joblib.dump(tokenizer, model_path.replace('.h5', '_tokenizer.pkl'))
 
-# Run the main function
-main(file_path, priority_columns, model_path, input_sentence)
+# Step 6: Load the model and tokenizer
+loaded_model = tf.keras.models.load_model(model_path)
+loaded_tokenizer = joblib.load(model_path.replace('.h5', '_tokenizer.pkl'))
+
+# Step 7: Predict using the loaded model
+preprocessed_sentence = preprocess_input(input_sentence)
+sequence = loaded_tokenizer.texts_to_sequences([preprocessed_sentence])
+padded_sequence = pad_sequences(sequence, padding='post', maxlen=df['Combined'].apply(lambda x: len(x.split())).max())
+print("Padded sequence for input sentence:\n", padded_sequence)
+
+# Predict the index of the row
+predicted_index = np.argmax(loaded_model.predict(padded_sequence), axis=-1)[0]
+full_row = df.iloc[predicted_index]
+print(f"Predicted row:\n{full_row}")
