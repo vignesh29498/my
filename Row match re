@@ -1,0 +1,125 @@
+import pandas as pd
+import re
+from datetime import datetime
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
+import joblib
+
+# Path to your training CSV file
+train_file_path = 'main_file.csv'
+
+# Read the CSV into a DataFrame
+df = pd.read_csv(train_file_path)
+
+# Assuming column names are 'column_a' and 'column_b'
+column_a_values = df['column_a']
+column_b_values = df['column_b']
+
+# Function to extract features
+def extract_features(value):
+    if isinstance(value, float):
+        value_str = str(value)
+    else:
+        value_str = str(value).strip().lower()  # Lowercase and strip whitespace
+    
+    # Feature: Length of the value
+    length = len(value_str)
+    
+    # Feature: Digit count
+    digit_count = sum(c.isdigit() for c in value_str)
+    
+    # Feature: Alphabetic count
+    alpha_count = sum(c.isalpha() for c in value_str)
+    
+    # Feature: Special characters count
+    special_chars_count = len(re.findall(r'[^a-zA-Z0-9]', value_str))
+    
+    # Feature: Is datetime and extract datetime components if applicable
+    try:
+        datetime_obj = pd.to_datetime(value_str, errors='raise')
+        is_datetime = 1
+        year = datetime_obj.year
+        month = datetime_obj.month
+        day = datetime_obj.day
+        hour = datetime_obj.hour
+        minute = datetime_obj.minute
+        second = datetime_obj.second
+    except ValueError:
+        is_datetime = 0
+        year = month = day = hour = minute = second = -1  # Use -1 to indicate non-datetime
+    
+    return [length, digit_count, alpha_count, special_chars_count, is_datetime, year, month, day, hour, minute, second]
+
+# Extract features for all values in column A
+features = [extract_features(value) for value in column_a_values]
+
+# Convert to DataFrame
+X = pd.DataFrame(features, columns=['length', 'digit_count', 'alpha_count', 'special_chars_count', 
+                                    'is_datetime', 'year', 'month', 'day', 'hour', 'minute', 'second'])
+
+# Encode the target column B
+label_encoder = LabelEncoder()
+y = label_encoder.fit_transform(column_b_values)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train a model (using Random Forest for example)
+model = RandomForestClassifier(random_state=42)
+model.fit(X_train, y_train)
+
+# Evaluate the model
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Model Accuracy: {accuracy * 100:.2f}%')
+
+# Save the model and label encoder
+joblib.dump(model, 'model.pkl')
+joblib.dump(label_encoder, 'label_encoder.pkl')
+
+
+
+
+
+
+
+# Path to the new CSV file for prediction
+new_file_path = 'new_file.csv'
+
+# Load the model and label encoder
+model = joblib.load('model.pkl')
+label_encoder = joblib.load('label_encoder.pkl')
+
+# Read the new CSV into a DataFrame
+new_df = pd.read_csv(new_file_path)
+
+# Assuming the new CSV has a column A to predict column B
+new_column_a_values = new_df['column_a']
+
+# Extract features for the new data
+new_features = [extract_features(value) for value in new_column_a_values]
+
+# Convert to DataFrame
+X_new = pd.DataFrame(new_features, columns=['length', 'digit_count', 'alpha_count', 'special_chars_count', 
+                                            'is_datetime', 'year', 'month', 'day', 'hour', 'minute', 'second'])
+
+# Predict column B
+y_new_pred = model.predict(X_new)
+
+# Convert predictions back to original labels
+predicted_column_b = label_encoder.inverse_transform(y_new_pred)
+
+# Add the predicted column B to the new DataFrame
+new_df['predicted_column_b'] = predicted_column_b
+
+# Save the predictions to a new CSV file
+new_df.to_csv('new_file_with_predictions.csv', index=False)
+print('Predictions saved to new_file_with_predictions.csv')
+
+
+
+
+
+
