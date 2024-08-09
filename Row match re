@@ -1,18 +1,22 @@
-import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.naive_bayes import MultinomialNB
-import joblib
 import re
+import pandas as pd
 from datetime import datetime
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import classification_report, accuracy_score
+import joblib
 
-# Load the saved model and vectorizer
-clf = joblib.load('regex_classifier_model.pkl')
-vectorizer = joblib.load('tfidf_vectorizer.pkl')
+# Path to the master sheet
+master_sheet_path = 'master_sheet.xlsx'
 
-# Path to the new data file
-new_data_file_path = 'new_data.dat'
+# Read the master sheet into a DataFrame
+master_df = pd.read_excel(master_sheet_path)
 
-# Function to create regex pattern from value
+# List to store all regex patterns and corresponding labels
+all_data = []
+
+# Function to determine the type and create regex
 def create_regex_pattern(value):
     # Check if it's an integer
     if value.isdigit():
@@ -44,19 +48,49 @@ def create_regex_pattern(value):
     # If none of the above, assume it's text
     return re.escape(value)  # Escape special characters for text
 
-# Read and process the new data file
-with open(new_data_file_path, 'r') as file:
-    new_data = [line.strip() for line in file if line.strip()]
+# Process each .dat file listed in the master sheet
+for _, row in master_df.iterrows():
+    dat_file_path = row['File Path']
+    label = row['Label']
+    
+    # Read the .dat file
+    with open(dat_file_path, 'r') as file:
+        for line in file:
+            line = line.strip()  # Remove leading/trailing whitespace or newline characters
+            if line:
+                # Convert the value to a regex pattern
+                regex_pattern = create_regex_pattern(line)
+                
+                # Add word boundaries for text patterns
+                if not regex_pattern.startswith(r'\b'):
+                    regex_pattern = rf'\b{regex_pattern}\b'
+                
+                # Add to the list with the specified label
+                all_data.append((regex_pattern, label))
 
-# Convert the new data into regex patterns
-regex_patterns = [create_regex_pattern(value) for value in new_data]
+# Convert the list of regex patterns and labels into a DataFrame
+df = pd.DataFrame(all_data, columns=['Regular Expression', 'Label'])
 
-# Transform the regex patterns using the loaded vectorizer
-X_new = vectorizer.transform(regex_patterns)
+# Feature extraction using TF-IDF
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(df['Regular Expression'])
+y = df['Label']
 
-# Predict using the loaded model
-predictions = clf.predict(X_new)
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-# Output the predictions
-for value, label in zip(new_data, predictions):
-    print(f"Value: {value} - Predicted Label: {label}")
+# Train a classifier
+clf = MultinomialNB()
+clf.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = clf.predict(X_test)
+
+# Evaluate the model
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
+
+# Save the model and vectorizer
+joblib.dump(clf, 'regex_classifier_model.pkl')
+joblib.dump(vectorizer, 'tfidf_vectorizer.pkl')
