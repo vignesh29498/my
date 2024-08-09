@@ -1,21 +1,11 @@
 import pandas as pd
 import re
 from datetime import datetime
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import LabelEncoder
 import joblib
-
-# Path to your training CSV file
-train_file_path = 'main_file.csv'
-
-# Read the CSV into a DataFrame
-df = pd.read_csv(train_file_path)
-
-# Assuming column names are 'column_a' and 'column_b'
-column_a_values = df['column_a']
-column_b_values = df['column_b']
 
 # Function to extract features
 def extract_features(value):
@@ -52,22 +42,48 @@ def extract_features(value):
     
     return [length, digit_count, alpha_count, special_chars_count, is_datetime, year, month, day, hour, minute, second]
 
-# Extract features for all values in column A
-features = [extract_features(value) for value in column_a_values]
+# Path to your main CSV file containing file paths in column_a
+main_file_path = 'main_file.csv'
 
-# Convert to DataFrame
-X = pd.DataFrame(features, columns=['length', 'digit_count', 'alpha_count', 'special_chars_count', 
-                                    'is_datetime', 'year', 'month', 'day', 'hour', 'minute', 'second'])
+# Read the main CSV into a DataFrame
+df_main = pd.read_csv(main_file_path)
 
-# Encode the target column B
+# Assuming column names are 'column_a' (file paths) and 'column_b' (target)
+column_a_values = df_main['column_a']
+column_b_values = df_main['column_b']
+
+# Prepare to collect all extracted features and labels
+X_all = []
+y_all = []
+
+# Iterate through each file path in column_a
+for file_path in column_a_values:
+    # Read the CSV file specified in file_path
+    try:
+        df = pd.read_csv(file_path)
+    except FileNotFoundError:
+        print(f"File '{file_path}' not found. Skipping...")
+        continue
+    
+    # Extract features for column_a values in this CSV
+    column_a_values = df['column_a']
+    features = [extract_features(value) for value in column_a_values]
+    X_all.extend(features)
+    
+    # Append corresponding column_b values (target labels)
+    y_all.extend(column_b_values[:len(features)])  # Assuming column_b has the same number of rows as column_a in each CSV
+
+# Convert features and labels to DataFrame and array
+X = pd.DataFrame(X_all, columns=['length', 'digit_count', 'alpha_count', 'special_chars_count', 
+                                 'is_datetime', 'year', 'month', 'day', 'hour', 'minute', 'second'])
 label_encoder = LabelEncoder()
-y = label_encoder.fit_transform(column_b_values)
+y = label_encoder.fit_transform(y_all)
 
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Train a model (using Random Forest for example)
-model = RandomForestClassifier(random_state=42)
+# Train a Gradient Boosting model
+model = GradientBoostingClassifier(random_state=42)
 model.fit(X_train, y_train)
 
 # Evaluate the model
@@ -76,50 +92,5 @@ accuracy = accuracy_score(y_test, y_pred)
 print(f'Model Accuracy: {accuracy * 100:.2f}%')
 
 # Save the model and label encoder
-joblib.dump(model, 'model.pkl')
-joblib.dump(label_encoder, 'label_encoder.pkl')
-
-
-
-
-
-
-
-# Path to the new CSV file for prediction
-new_file_path = 'new_file.csv'
-
-# Load the model and label encoder
-model = joblib.load('model.pkl')
-label_encoder = joblib.load('label_encoder.pkl')
-
-# Read the new CSV into a DataFrame
-new_df = pd.read_csv(new_file_path)
-
-# Assuming the new CSV has a column A to predict column B
-new_column_a_values = new_df['column_a']
-
-# Extract features for the new data
-new_features = [extract_features(value) for value in new_column_a_values]
-
-# Convert to DataFrame
-X_new = pd.DataFrame(new_features, columns=['length', 'digit_count', 'alpha_count', 'special_chars_count', 
-                                            'is_datetime', 'year', 'month', 'day', 'hour', 'minute', 'second'])
-
-# Predict column B
-y_new_pred = model.predict(X_new)
-
-# Convert predictions back to original labels
-predicted_column_b = label_encoder.inverse_transform(y_new_pred)
-
-# Add the predicted column B to the new DataFrame
-new_df['predicted_column_b'] = predicted_column_b
-
-# Save the predictions to a new CSV file
-new_df.to_csv('new_file_with_predictions.csv', index=False)
-print('Predictions saved to new_file_with_predictions.csv')
-
-
-
-
-
-
+joblib.dump(model, 'gradient_boosting_model_with_filepaths.pkl')
+joblib.dump(label_encoder, 'label_encoder_with_filepaths.pkl')
