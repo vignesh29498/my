@@ -1,96 +1,102 @@
-import pandas as pd
 import re
+import pandas as pd
 from datetime import datetime
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import LabelEncoder
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import classification_report, accuracy_score
 import joblib
 
-# Function to extract features
-def extract_features(value):
-    if isinstance(value, float):
-        value_str = str(value)
-    else:
-        value_str = str(value).strip().lower()  # Lowercase and strip whitespace
+# Path to the master sheet
+master_sheet_path = 'master_sheet.xlsx'
+
+# Read the master sheet into a DataFrame
+master_df = pd.read_excel(master_sheet_path)
+
+# List to store all regex patterns and corresponding labels
+all_data = []
+
+# Function to determine the type and create regex
+def create_regex_pattern(value):
+    # Check if it's an integer
+    if value.isdigit():
+        return r'\b\d+\b'
     
-    # Feature: Length of the value
-    length = len(value_str)
-    
-    # Feature: Digit count
-    digit_count = sum(c.isdigit() for c in value_str)
-    
-    # Feature: Alphabetic count
-    alpha_count = sum(c.isalpha() for c in value_str)
-    
-    # Feature: Special characters count
-    special_chars_count = len(re.findall(r'[^a-zA-Z0-9]', value_str))
-    
-    # Feature: Is datetime and extract datetime components if applicable
+    # Check if it's a float
     try:
-        datetime_obj = pd.to_datetime(value_str, errors='raise')
-        is_datetime = 1
-        year = datetime_obj.year
-        month = datetime_obj.month
-        day = datetime_obj.day
-        hour = datetime_obj.hour
-        minute = datetime_obj.minute
-        second = datetime_obj.second
+        float(value)
+        return r'\b\d+\.\d+\b'
     except ValueError:
-        is_datetime = 0
-        year = month = day = hour = minute = second = -1  # Use -1 to indicate non-datetime
+        pass
     
-    return [length, digit_count, alpha_count, special_chars_count, is_datetime, year, month, day, hour, minute, second]
-
-# Path to your main CSV file containing file paths in column_a
-main_file_path = 'main_file.csv'
-
-# Read the main CSV into a DataFrame
-df_main = pd.read_csv(main_file_path)
-
-# Assuming column names are 'column_a' (file paths) and 'column_b' (target)
-column_a_values = df_main['column_a']
-column_b_values = df_main['column_b']
-
-# Prepare to collect all extracted features and labels
-X_all = []
-y_all = []
-
-# Iterate through each file path in column_a
-for file_path in column_a_values:
-    # Read the CSV file specified in file_path
-    try:
-        df = pd.read_csv(file_path)
-    except FileNotFoundError:
-        print(f"File '{file_path}' not found. Skipping...")
-        continue
+    # Check if it's a date
+    date_patterns = [
+        r'\b\d{4}-\d{2}-\d{2}\b',  # YYYY-MM-DD
+        r'\b\d{2}/\d{2}/\d{4}\b',  # MM/DD/YYYY
+        r'\b\d{4}/\d{2}/\d{2}\b',  # YYYY/MM/DD
+        r'\b\d{2}-\d{2}-\d{4}\b',  # DD-MM-YYYY
+        r'\b\d{4}\d{2}\d{2}\b',    # YYYYMMDD
+        r'\b\d{2}:\d{2}:\d{2}\b'   # HH:MM:SS
+    ]
+    for date_pattern in date_patterns:
+        try:
+            datetime.strptime(value, date_pattern)
+            return date_pattern
+        except ValueError:
+            continue
     
-    # Extract features for column_a values in this CSV
-    column_a_values = df['column_a']
-    features = [extract_features(value) for value in column_a_values]
-    X_all.extend(features)
+    # If none of the above, assume it's text
+    return re.escape(value)  # Escape special characters for text
+
+# Process each .dat file listed in the master sheet
+for _, row in master_df.iterrows():
+    dat_file_path = row['File Path']
+    label = row['Label']
     
-    # Append corresponding column_b values (target labels)
-    y_all.extend(column_b_values[:len(features)])  # Assuming column_b has the same number of rows as column_a in each CSV
+    # Read the .dat file
+    with open(dat_file_path, 'r') as file:
+        for line in file:
+            line = line.strip()  # Remove leading/trailing whitespace or newline characters
+            if line:
+                # Convert the value to a regex pattern
+                regex_pattern = create_regex_pattern(line)
+                
+                # Add word boundaries for text patterns
+                if not regex_pattern.startswith(r'\b'):
+                    regex_pattern = rf'\b{regex_pattern}\b'
+                
+                # Add to the list with the specified label
+                all_data.append((regex_pattern, label))
 
-# Convert features and labels to DataFrame and array
-X = pd.DataFrame(X_all, columns=['length', 'digit_count', 'alpha_count', 'special_chars_count', 
-                                 'is_datetime', 'year', 'month', 'day', 'hour', 'minute', 'second'])
-label_encoder = LabelEncoder()
-y = label_encoder.fit_transform(y_all)
+# Convert the list of regex patterns and labels into a DataFrame
+df = pd.DataFrame(all_data, columns=['Regular Expression', 'Label'])
 
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Create a mapping for labels
+label_mapping = {label: chr(65 + i) for i, label in enumerate(df['Label'].unique())}
 
-# Train a Gradient Boosting model
-model = GradientBoostingClassifier(random_state=42)
-model.fit(X_train, y_train)
+# Map the labels to alphabetic values
+df['Label'] = df['Label'].map(label_mapping)
+
+# Feature extraction using TF-IDF
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(df['Regular Expression'])
+y = df['Label']
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Train a classifier
+clf = MultinomialNB()
+clf.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = clf.predict(X_test)
 
 # Evaluate the model
-y_pred = model.predict(X_test)
-accuracy = accuracy_score(y_test, y_pred)
-print(f'Model Accuracy: {accuracy * 100:.2f}%')
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
 
-# Save the model and label encoder
-joblib.dump(model, 'gradient_boosting_model_with_filepaths.pkl')
-joblib.dump(label_encoder, 'label_encoder_with_filepaths.pkl')
+# Save the model and vectorizer
+joblib.dump(clf, 'regex_classifier_model.pkl')
+joblib.dump(vectorizer, 'tfidf_vectorizer.pkl')
