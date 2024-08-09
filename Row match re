@@ -2,6 +2,8 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 import joblib
+import re
+from datetime import datetime
 
 # Load the saved model and vectorizer
 clf = joblib.load('regex_classifier_model.pkl')
@@ -55,10 +57,6 @@ X_new = vectorizer.transform(regex_patterns)
 # Predict using the loaded model
 predictions = clf.predict(X_new)
 
-# Convert numeric predictions back to original labels
-reverse_label_mapping = {v: k for k, v in joblib.load('label_mapping.pkl').items()}
-predicted_labels = [reverse_label_mapping[pred] for pred in predictions]
-
 # Output the predictions
-for value, label in zip(new_data, predicted_labels):
+for value, label in zip(new_data, predictions):
     print(f"Value: {value} - Predicted Label: {label}")
