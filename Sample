@@ -1,32 +1,17 @@
-import pandas as pd
+Scheduled a connect with TCS internal AI team and modified the input document and prompt based on their suggestion.
 
-def update_first_column_with_empty(csv_file, row_positions, output_file):
-    # Read the existing CSV file
-    try:
-        df = pd.read_csv(csv_file, header=None)
-    except FileNotFoundError:
-        print(f"File '{csv_file}' not found.")
-        return
+Achieved around 70% accuracy for unique field handoff files, but still facing issues with repeating fields.
 
-    # Ensure DataFrame has enough rows to accommodate all specified positions
-    max_row_position = max(row_positions)
-    
-    # Adjust rows if necessary
-    if max_row_position > len(df):
-        for _ in range(max_row_position - len(df)):
-            df.loc[len(df)] = ['NA'] * len(df.columns)
-    
-    # Update the first column in specified rows with "empty"
-    for row_pos in row_positions:
-        df.iloc[row_pos - 1, 0] = "empty"  # Adjusting for 0-based indexing
-    
-    # Save the DataFrame to a CSV file, overwriting the existing file
-    df.to_csv(output_file, index=False, header=False)
-    print(f"CSV file '{output_file}' updated successfully.")
+Got another suggestion from TCS internal AI team to reference a sample JSON object for output, but accuracy is still below expectations.
 
-# Example usage
-row_positions = [1, 2, 3]  # Specific row positions to be updated with "empty"
-csv_file = 'output.csv'
-output_file = 'output.csv'
+Scheduled a connect with the TCS COE team for further steps.
 
-update_first_column_with_empty(csv_file, row_positions, output_file)
+Successfully generated test scenarios for AI test case generation but couldn't view all due to LLM limitations.
+
+Split the input into smaller parts in a loop to generate test cases in JSON format.
+
+Converted test cases into BDD format and then into Selenium Java code.
+
+Completed a review with the functional team, and generated new test cases and scenarios based on their comments.
+
+Both files were shared with the functional team for final review.
