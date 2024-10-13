@@ -1,1 +1,33 @@
+import xml.etree.ElementTree as ET
 
+def extract_xsd_key_value_pairs(xsd_file):
+    # Parse the XSD file
+    tree = ET.parse(xsd_file)
+    root = tree.getroot()
+
+    # Namespace for XSD
+    ns = {'xs': 'http://www.w3.org/2001/XMLSchema'}
+    
+    # List to hold key-value pairs
+    key_value_pairs = []
+
+    # Find all element definitions in the XSD
+    for element in root.findall(".//xs:element", ns):
+        element_name = element.get('name')
+        element_type = element.get('type')
+
+        # Append element name and type to the list
+        if element_name and element_type:
+            key_value_pairs.append((element_name, element_type))
+        elif element_name:
+            key_value_pairs.append((element_name, "No explicit type"))
+
+    return key_value_pairs
+
+# Example usage
+xsd_file = 'sample_schema.xsd'  # Replace with your XSD file path
+key_values = extract_xsd_key_value_pairs(xsd_file)
+
+# Display key-value pairs
+for key, value in key_values:
+    print(f"Element: {key}, Type: {value}")
