@@ -1,21 +1,22 @@
 import pandas as pd
+import re
 
-def read_cfr_file(file_path):
-    data = []
-    with open(file_path, 'r') as file:
-        for line in file:
-            line = line.strip()
-            if "::" in line:  # Checks for lines with key-value pairs
-                key_value = line.split("::")
-                key = key_value[0].strip()
-                value = key_value[1].strip() if len(key_value) > 1 else ''
-                data.append([key, value])
-    return data
+# Function to extract text between /* and */
+def extract_between(value):
+    match = re.search(r'/\*(.*?)\*/', value)
+    if match:
+        return match.group(1).strip()  # Return the text between /* and */
+    return None
 
-cfr_file_path = 'sample.cfr'
-cfr_data = read_cfr_file(cfr_file_path)
+# Load the CSV file
+csv_file_path = 'your_file.csv'  # Replace with your actual file path
+df = pd.read_csv(csv_file_path)
 
-df = pd.DataFrame(cfr_data, columns=['Key', 'Value'])
-df.to_csv('output_file.csv', index=False)
+# Assuming the column name is 'your_column'
+df['extracted_values'] = df['your_column'].apply(extract_between)
 
-print(f"CFR data saved to output_file.csv")
+# Display the extracted values
+print(df[['your_column', 'extracted_values']])
+
+# Save the output to a new CSV file (optional)
+df.to_csv('extracted_values.csv', index=False)
