@@ -1,14 +1,14 @@
 import pandas as pd
 
-def read_xfr_file(file_path):
-    data = [
-        {'Column1': 'Value1', 'Column2': 'Value2'},
-        {'Column1': 'Value3', 'Column2': 'Value4'}
-    ]
+def read_cfr_file(file_path):
+    with open(file_path, 'r') as file:
+        data = [line.strip() for line in file.readlines()]
     return data
 
-xfr_file_path = 'path_to_your_file.xfr'
-xfr_data = read_xfr_file(xfr_file_path)
+cfr_file_path = 'sample.cfr'
+cfr_data = read_cfr_file(cfr_file_path)
 
-df = pd.DataFrame(xfr_data)
-df.to_excel('output_file.xlsx', index=False)
+df = pd.DataFrame(cfr_data, columns=['CFR_Content'])
+df.to_csv('output_file.csv', index=False)
+
+print(f"CFR data saved to output_file.csv")
