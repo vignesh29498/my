@@ -1,18 +1,14 @@
-import os
 import pandas as pd
 
-def list_files_to_excel(folder_path, output_excel_path):
-    # Get list of all files in the specified folder
-    files = os.listdir(folder_path)
+def read_xfr_file(file_path):
+    data = [
+        {'Column1': 'Value1', 'Column2': 'Value2'},
+        {'Column1': 'Value3', 'Column2': 'Value4'}
+    ]
+    return data
 
-    # Create a DataFrame from the list of file names
-    df = pd.DataFrame(files, columns=['File Names'])
+xfr_file_path = 'path_to_your_file.xfr'
+xfr_data = read_xfr_file(xfr_file_path)
 
-    # Write the DataFrame to an Excel file
-    df.to_excel(output_excel_path, index=False)
-
-# Example usage:
-folder_path = '/path/to/your/folder'
-output_excel_path = '/path/to/output/file_names.xlsx'
-
-list_files_to_excel(folder_path, output_excel_path)
+df = pd.DataFrame(xfr_data)
+df.to_excel('output_file.xlsx', index=False)
