@@ -1,17 +1,15 @@
 import pandas as pd
 import re
 
-def extract_and_remove(value):
-    match = re.search(r'/\*(.*?)\*/', value)
-    if match:
-        modified_value = value.replace(match.group(0), '').strip()
-        return modified_value, match.group(1).strip()
-    return value, None
+def extract_all_after_utf8(value):
+    matches = re.findall(r'\x01(.*?)(?=\x01|$)', value)
+    return [match.strip() for match in matches]
 
-csv_file_path = 'your_file.csv'  # Replace with your file path
+csv_file_path = 'your_file.csv'
 df = pd.read_csv(csv_file_path)
 
-df['modified_column'], df['extracted_values'] = zip(*df['your_column'].apply(extract_and_remove))
+column_name = 'your_column'
+df['extracted_values'] = df[column_name].apply(extract_all_after_utf8)
 
-print(df[['your_column', 'modified_column', 'extracted_values']])
+print(df[['your_column', 'extracted_values']])
 df.to_csv('modified_values.csv', index=False)
