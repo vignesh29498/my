@@ -1,22 +1,17 @@
 import pandas as pd
 import re
 
-# Function to extract text between /* and */
-def extract_between(value):
+def extract_and_remove(value):
     match = re.search(r'/\*(.*?)\*/', value)
     if match:
-        return match.group(1).strip()  # Return the text between /* and */
-    return None
+        modified_value = value.replace(match.group(0), '').strip()
+        return modified_value, match.group(1).strip()
+    return value, None
 
-# Load the CSV file
-csv_file_path = 'your_file.csv'  # Replace with your actual file path
+csv_file_path = 'your_file.csv'  # Replace with your file path
 df = pd.read_csv(csv_file_path)
 
-# Assuming the column name is 'your_column'
-df['extracted_values'] = df['your_column'].apply(extract_between)
+df['modified_column'], df['extracted_values'] = zip(*df['your_column'].apply(extract_and_remove))
 
-# Display the extracted values
-print(df[['your_column', 'extracted_values']])
-
-# Save the output to a new CSV file (optional)
-df.to_csv('extracted_values.csv', index=False)
+print(df[['your_column', 'modified_column', 'extracted_values']])
+df.to_csv('modified_values.csv', index=False)
