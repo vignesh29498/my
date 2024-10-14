@@ -1,14 +1,21 @@
 import pandas as pd
 
 def read_cfr_file(file_path):
+    data = []
     with open(file_path, 'r') as file:
-        data = [line.strip() for line in file.readlines()]
+        for line in file:
+            line = line.strip()
+            if "::" in line:  # Checks for lines with key-value pairs
+                key_value = line.split("::")
+                key = key_value[0].strip()
+                value = key_value[1].strip() if len(key_value) > 1 else ''
+                data.append([key, value])
     return data
 
 cfr_file_path = 'sample.cfr'
 cfr_data = read_cfr_file(cfr_file_path)
 
-df = pd.DataFrame(cfr_data, columns=['CFR_Content'])
+df = pd.DataFrame(cfr_data, columns=['Key', 'Value'])
 df.to_csv('output_file.csv', index=False)
 
 print(f"CFR data saved to output_file.csv")
