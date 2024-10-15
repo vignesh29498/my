@@ -17,16 +17,17 @@ def extract_data(value):
 
 for value in df['Value']:
     null_value, datatype, size = extract_data(str(value))
-    null_values.append(null_value)
-    data_types.append(datatype)
-    sizes.append(size)
+    if null_value is not None and datatype is not None:
+        null_values.append(null_value)
+        data_types.append(datatype)
+        sizes.append(size)
 
-df['Column_1_Null_Values'] = null_values
-df['Column_2_Data_Types'] = data_types
-df['Column_3_Sizes'] = sizes
+df_result = pd.DataFrame({
+    'Column_1_Null_Values': null_values,
+    'Column_2_Data_Types': data_types,
+    'Column_3_Sizes': sizes
+})
 
-df_filtered = df[['Column_1_Null_Values', 'Column_2_Data_Types', 'Column_3_Sizes']].dropna()
+df_result.to_csv('output_file.csv', index=False)
 
-df_filtered.to_csv('output_file.csv', index=False)
-
-print(df_filtered.head())
+print(df_result.head())
