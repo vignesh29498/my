@@ -1,18 +1,56 @@
 import pandas as pd
+import re
 
-input_file = 'input.csv'
-df_input = pd.read_csv(input_file)
+# Read the CSV file
+df = pd.read_csv('output_file_key_value.csv')
 
-column_to_extract = 'column_name'
-extracted_column = df_input[column_to_extract]
+# Lists to hold extracted values
+null_values = []
+data_types = []
+sizes = []
 
-output_file = 'output.csv'
-df_output = pd.read_csv(output_file)
+# Function to extract data from a value
+def extract_data(value):
+    # Check for NULL values
+    null_value = "NULL" if "NULL" in value else None
+    
+    # Extract the data type
+    datatype_match = re.search(r'/\*([A-Z0-9]+)', value)
+    datatype = datatype_match.group(1) if datatype_match else None
+    
+    # Extract size for VARCHAR2
+    size_match = re.search(r'VARCHAR2(\d+)', value)
+    size = size_match.group(1) if size_match else None
+    
+    # Extract size for CHAR
+    char_size_match = re.search(r'CHAR(\d+)', value)
+    char_size = char_size_match.group(1) if char_size_match else None
+    
+    return null_value, datatype, size, char_size
 
-new_column_df = pd.DataFrame({column_to_extract: extracted_column})
+# Loop through each value in the DataFrame
+for value in df['Value']:
+    null_value, datatype, size, char_size = extract_data(str(value))
+    
+    # Append values to lists if they are not None
+    if null_value is not None:
+        null_values.append(null_value)
+    
+    if datatype is not None:
+        data_types.append(datatype)
+    
+    if size is not None:
+        sizes.append(size)
+    
+    if char_size is not None:
+        sizes.append(char_size)
 
-if len(new_column_df) < len(df_output):
-    new_column_df = new_column_df.reindex(df_output.index)
+# Create a DataFrame with the results
+results = pd.DataFrame({
+    'Null Values': null_values,
+    'Data Types': data_types,
+    'Sizes': sizes
+})
 
-combined_df = pd.concat([new_column_df, df_output], axis=1)
-combined_df.to_csv(output_file, index=False)
+# Display the resulting DataFrame
+print(results)
