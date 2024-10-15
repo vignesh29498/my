@@ -1,38 +1,24 @@
 import pandas as pd
 import re
 
-# Read the CSV file
-df = pd.read_csv('output_file_key_value.csv')
-
-# Lists to hold extracted sizes
-varchar_sizes = []
-char_sizes = []
-
-# Function to extract sizes from a value
 def extract_lengths(value):
-    # Extract size for VARCHAR2
-    size_match = re.search(r'VARCHAR2(\d+)', value)
-    varchar_size = size_match.group(1) if size_match else None
-    
-    # Extract size for CHAR
-    char_size_match = re.search(r'CHAR(\d+)', value)
-    char_size = char_size_match.group(1) if char_size_match else None
-    
-    return varchar_size, char_size
+    match = re.findall(r'\b(VARCHAR2|CHAR|NUMBER)(\d+)', value)
+    return [int(size) for _, size in match]
 
-# Loop through each value in the DataFrame
-for value in df['Value']:
-    varchar_size, char_size = extract_lengths(str(value))
-    
-    # Append sizes to their respective lists
-    varchar_sizes.append(varchar_size)
-    char_sizes.append(char_size)
+input_file = 'input_data.csv'  
+column_name = 'YourColumnName'    
+df = pd.read_csv(input_file)
 
-# Create a DataFrame with the results
-results = pd.DataFrame({
-    'VARCHAR2 Sizes': varchar_sizes,
-    'CHAR Sizes': char_sizes
-})
+if column_name not in df.columns:
+    raise ValueError(f"Column '{column_name}' not found in the CSV file.")
 
-# Display the resulting DataFrame
-print(results)
+lengths = []
+for value in df[column_name].dropna().astype(str):
+    lengths.extend(extract_lengths(value))
+
+df_lengths = pd.DataFrame(lengths, columns=['Length'])
+output_file = 'extracted_lengths.csv'
+df_lengths.to_csv(output_file, index=False)
+
+print(df_lengths)
+print(f"Lengths have been written to {output_file}.")
