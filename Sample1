@@ -16,3 +16,28 @@ df[column_name] = df[column_name].str.replace(')', '', regex=False)
 
 print(df[[column_name, 'extracted_values']])
 df.to_csv('modified_values.csv', index=False)
+
+
+
+import pandas as pd
+import re
+
+# Load the CSV file
+df = pd.read_csv('your_file.csv')
+
+# Function to extract value inside parentheses and remove it from the original text
+def extract_and_remove_parentheses(value):
+    # Extract the value inside parentheses
+    match = re.search(r'(.*?)', str(value))
+    extracted_value = match.group(1) if match else None
+    # Remove the parentheses and their content from the original text
+    cleaned_value = re.sub(r'.*?', '', str(value)).strip()
+    return extracted_value, cleaned_value
+
+# Apply the function to the desired column
+df[['extracted_value', 'column_name']] = df['column_name'].apply(lambda x: pd.Series(extract_and_remove_parentheses(x)))
+
+# Save the result to a new CSV file (optional)
+df.to_csv('output_file.csv', index=False)
+
+print(df.head())
