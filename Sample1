@@ -1,22 +1,13 @@
 import pandas as pd
-import re
 
-# Load the CSV file
+my_list = ['value1', 'value2', 'value3', 'value4']
+
 df = pd.read_csv('your_file.csv')
 
-# Function to extract value inside parentheses and remove only the parentheses content
-def extract_and_remove_parentheses(value):
-    # Extract the value inside parentheses
-    match = re.search(r'(.*?)', str(value))  # Finds content within parentheses
-    extracted_value = match.group(1) if match else None
-    # Remove only the parentheses and their content from the original text
-    cleaned_value = re.sub(r'.*?', '', str(value)).strip()  # Removes parentheses and content
-    return extracted_value, cleaned_value
-
-# Apply the function to the desired column
-df[['extracted_value', 'column_name']] = df['column_name'].apply(lambda x: pd.Series(extract_and_remove_parentheses(x)))
-
-# Save the result to a new CSV file (optional)
-df.to_csv('output_file.csv', index=False)
+if len(my_list) == len(df):
+    df['new_column_name'] = my_list
+    df.to_csv('output_file.csv', index=False)
+else:
+    print("The length of the list doesn't match the number of rows in the CSV file.")
 
 print(df.head())
