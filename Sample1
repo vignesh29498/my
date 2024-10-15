@@ -1,18 +1,16 @@
 import pandas as pd
 
-# Read the original input CSV and extract the required column
 input_file = 'input.csv'
 df_input = pd.read_csv(input_file)
 
 column_to_extract = 'column_name'
 extracted_column = df_input[column_to_extract]
 
-# Read the output CSV file where you want to add this column
 output_file = 'output.csv'
 df_output = pd.read_csv(output_file)
 
-# Insert the extracted column as the first column in the output CSV
-df_output.insert(0, column_to_extract, extracted_column)
-
-# Save the updated output CSV file
-df_output.to_csv(output_file, index=False)
+if len(extracted_column) == len(df_output):
+    df_output.insert(0, column_to_extract, extracted_column)
+    df_output.to_csv(output_file, index=False)
+else:
+    print("Error: The number of rows in the input file and output file do not match.")
