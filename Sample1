@@ -1,33 +1,10 @@
 import pandas as pd
-import re
 
-df = pd.read_csv('your_file.csv')
+df1 = pd.read_csv('file1.csv')
+df2 = pd.read_csv('file2.csv')
 
-null_values = []
-data_types = []
-sizes = []
+columns_file1 = df1[['ColumnA', 'ColumnB']]  # Adjust column names as needed
+columns_file2 = df2[['ColumnC', 'ColumnD']]  # Adjust column names as needed
 
-def extract_data(value):
-    null_value = "NULL" if "NULL" in value else None
-    datatype_match = re.search(r'/\*([A-Z]+)', value)
-    datatype = datatype_match.group(1) if datatype_match else None
-    size_match = re.search(r'(\d+)', value)
-    size = size_match.group(1) if size_match else None
-    return null_value, datatype, size
-
-for value in df['Value']:
-    null_value, datatype, size = extract_data(str(value))
-    if null_value is not None and datatype is not None:
-        null_values.append(null_value)
-        data_types.append(datatype)
-        sizes.append(size)
-
-df_result = pd.DataFrame({
-    'Column_1_Null_Values': null_values,
-    'Column_2_Data_Types': data_types,
-    'Column_3_Sizes': sizes
-})
-
-df_result.to_csv('output_file.csv', index=False)
-
-print(df_result.head())
+result = pd.concat([columns_file1, columns_file2], axis=1)
+result.to_csv('output_file.csv', index=False)
