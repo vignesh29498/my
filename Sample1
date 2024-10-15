@@ -2,21 +2,46 @@ import pandas as pd
 import re
 
 def extract_lengths(value):
-    match = re.findall(r'\b(VARCHAR2|CHAR|NUMBER)(\d+)', value)
+    """Extracts lengths from a string containing data type and length information.
+
+    Args:
+        value (str): The input string.
+
+    Returns:
+        list: A list of extracted lengths.
+    """
+
+    match = re.findall(r'\b(VARCHAR2|CHAR|NUMBER)\s+(\d+)', value)
     return [int(size) for _, size in match]
 
-input_file = 'input_data.csv'  
-column_name = 'YourColumnName'    
-df = pd.read_csv(input_file)
+def process_csv(input_file, column_name):
+    """Processes a CSV file to extract lengths from a specified column.
 
-if column_name not in df.columns:
-    raise ValueError(f"Column '{column_name}' not found in the CSV file.")
+    Args:
+        input_file (str): The input CSV file path.
+        column_name (str): The name of the column containing data type and length information.
 
-lengths = []
-for value in df[column_name].dropna().astype(str):
-    lengths.extend(extract_lengths(value))
+    Returns:
+        pandas.DataFrame: A DataFrame containing the extracted lengths.
+    """
 
-df_lengths = pd.DataFrame(lengths, columns=['Length'])
+    df = pd.read_csv(input_file)
+
+    if column_name not in df.columns:
+        raise ValueError(f"Column '{column_name}' not found in the CSV file.")
+
+    lengths = []
+    for value in df[column_name].dropna().astype(str):
+        lengths.extend(extract_lengths(value))
+
+    df_lengths = pd.DataFrame(lengths, columns=['Length'])
+    return df_lengths
+
+input_file = 'input_data.csv'
+column_name = 'YourColumnName'
+
+df_lengths = process_csv(input_file, column_name)
+
 output_file = 'extracted_lengths.csv'
 df_lengths.to_csv(output_file, index=False)
 
