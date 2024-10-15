@@ -1,21 +1,18 @@
 import pandas as pd
 
-# Replace 'existing_file.csv' and 'new_column_file.csv' with your actual file paths
-existing_file = 'existing_file.csv'
-new_column_file = 'new_column_file.csv'
+# Read the original input CSV and extract the required column
+input_file = 'input.csv'
+df_input = pd.read_csv(input_file)
 
-# Read the existing CSV file into a DataFrame
-existing_df = pd.read_csv(existing_file)
+column_to_extract = 'column_name'
+extracted_column = df_input[column_to_extract]
 
-# Read the new column data from the other CSV file
-new_column_df = pd.read_csv(new_column_file)
+# Read the output CSV file where you want to add this column
+output_file = 'output.csv'
+df_output = pd.read_csv(output_file)
 
-# Ensure the new column data has the same number of rows as the existing DataFrame
-if len(new_column_df) != len(existing_df):
-    raise ValueError("The number of rows in the new column file must match the existing file.")
+# Insert the extracted column as the first column in the output CSV
+df_output.insert(0, column_to_extract, extracted_column)
 
-# Add the new column to the existing DataFrame
-existing_df['new_column'] = new_column_df['column_name']  # Replace 'column_name' with the actual column name in the new column file
-
-# Save the updated DataFrame to a new CSV file
-existing_df.to_csv('updated_file.csv', index=False)
+# Save the updated output CSV file
+df_output.to_csv(output_file, index=False)
