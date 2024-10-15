@@ -1,37 +1,16 @@
 import pandas as pd
 import re
 
-def extract_and_clean(value):
-    match = re.search(r'\)\s*(.*)', value)
-    if match:
-        return match.group(1).strip()
-    return None
-
-csv_file_path = 'your_file.csv'  # Replace with your actual file path
-df = pd.read_csv(csv_file_path)
-
-column_name = 'your_column'  # Replace with your actual column name
-df['extracted_values'] = df[column_name].apply(extract_and_clean)
-df[column_name] = df[column_name].str.replace(')', '', regex=False)
-
-print(df[[column_name, 'extracted_values']])
-df.to_csv('modified_values.csv', index=False)
-
-
-
-import pandas as pd
-import re
-
 # Load the CSV file
 df = pd.read_csv('your_file.csv')
 
-# Function to extract value inside parentheses and remove it from the original text
+# Function to extract value inside parentheses and remove only the parentheses content
 def extract_and_remove_parentheses(value):
     # Extract the value inside parentheses
-    match = re.search(r'(.*?)', str(value))
+    match = re.search(r'(.*?)', str(value))  # Finds content within parentheses
     extracted_value = match.group(1) if match else None
-    # Remove the parentheses and their content from the original text
-    cleaned_value = re.sub(r'.*?', '', str(value)).strip()
+    # Remove only the parentheses and their content from the original text
+    cleaned_value = re.sub(r'.*?', '', str(value)).strip()  # Removes parentheses and content
     return extracted_value, cleaned_value
 
 # Apply the function to the desired column
