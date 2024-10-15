@@ -4,53 +4,34 @@ import re
 # Read the CSV file
 df = pd.read_csv('output_file_key_value.csv')
 
-# Lists to hold extracted values
-null_values = []
-data_types = []
-sizes = []
+# Lists to hold extracted sizes
+varchar_sizes = []
+char_sizes = []
 
-# Function to extract data from a value
-def extract_data(value):
-    # Check for NULL values
-    null_value = "NULL" if "NULL" in value else None
-    
-    # Extract the data type
-    datatype_match = re.search(r'/\*([A-Z0-9]+)', value)
-    datatype = datatype_match.group(1) if datatype_match else None
-    
+# Function to extract sizes from a value
+def extract_lengths(value):
     # Extract size for VARCHAR2
     size_match = re.search(r'VARCHAR2(\d+)', value)
-    size = size_match.group(1) if size_match else None
+    varchar_size = size_match.group(1) if size_match else None
     
     # Extract size for CHAR
     char_size_match = re.search(r'CHAR(\d+)', value)
     char_size = char_size_match.group(1) if char_size_match else None
     
-    return null_value, datatype, size, char_size
+    return varchar_size, char_size
 
 # Loop through each value in the DataFrame
 for value in df['Value']:
-    null_value, datatype, size, char_size = extract_data(str(value))
+    varchar_size, char_size = extract_lengths(str(value))
     
-    # Append values to lists, ensuring all lists stay the same length
-    null_values.append(null_value)
-    data_types.append(datatype)
-    
-    if size is not None:
-        sizes.append(size)
-    else:
-        sizes.append(None)  # Append None if size is not found
-
-    if char_size is not None:
-        sizes.append(char_size)
-    else:
-        sizes.append(None)  # Append None if char_size is not found
+    # Append sizes to their respective lists
+    varchar_sizes.append(varchar_size)
+    char_sizes.append(char_size)
 
 # Create a DataFrame with the results
 results = pd.DataFrame({
-    'Null Values': null_values,
-    'Data Types': data_types,
-    'Sizes': sizes
+    'VARCHAR2 Sizes': varchar_sizes,
+    'CHAR Sizes': char_sizes
 })
 
 # Display the resulting DataFrame
