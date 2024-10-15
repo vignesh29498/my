@@ -1,10 +1,21 @@
 import pandas as pd
 
-df1 = pd.read_csv('file1.csv')
-df2 = pd.read_csv('file2.csv')
+# Replace 'existing_file.csv' and 'new_column_file.csv' with your actual file paths
+existing_file = 'existing_file.csv'
+new_column_file = 'new_column_file.csv'
 
-columns_file1 = df1[['ColumnA', 'ColumnB']]  # Adjust column names as needed
-columns_file2 = df2[['ColumnC', 'ColumnD']]  # Adjust column names as needed
+# Read the existing CSV file into a DataFrame
+existing_df = pd.read_csv(existing_file)
 
-result = pd.concat([columns_file1, columns_file2], axis=1)
-result.to_csv('output_file.csv', index=False)
+# Read the new column data from the other CSV file
+new_column_df = pd.read_csv(new_column_file)
+
+# Ensure the new column data has the same number of rows as the existing DataFrame
+if len(new_column_df) != len(existing_df):
+    raise ValueError("The number of rows in the new column file must match the existing file.")
+
+# Add the new column to the existing DataFrame
+existing_df['new_column'] = new_column_df['column_name']  # Replace 'column_name' with the actual column name in the new column file
+
+# Save the updated DataFrame to a new CSV file
+existing_df.to_csv('updated_file.csv', index=False)
