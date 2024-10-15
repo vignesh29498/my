@@ -32,18 +32,19 @@ def extract_data(value):
 for value in df['Value']:
     null_value, datatype, size, char_size = extract_data(str(value))
     
-    # Append values to lists if they are not None
-    if null_value is not None:
-        null_values.append(null_value)
-    
-    if datatype is not None:
-        data_types.append(datatype)
+    # Append values to lists, ensuring all lists stay the same length
+    null_values.append(null_value)
+    data_types.append(datatype)
     
     if size is not None:
         sizes.append(size)
-    
+    else:
+        sizes.append(None)  # Append None if size is not found
+
     if char_size is not None:
         sizes.append(char_size)
+    else:
+        sizes.append(None)  # Append None if char_size is not found
 
 # Create a DataFrame with the results
 results = pd.DataFrame({
