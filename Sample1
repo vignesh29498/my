@@ -1,13 +1,32 @@
 import pandas as pd
-
-my_list = ['value1', 'value2', 'value3', 'value4']
+import re
 
 df = pd.read_csv('your_file.csv')
 
-if len(my_list) == len(df):
-    df['new_column_name'] = my_list
-    df.to_csv('output_file.csv', index=False)
-else:
-    print("The length of the list doesn't match the number of rows in the CSV file.")
+null_values = []
+data_types = []
+sizes = []
 
-print(df.head())
+def extract_data(value):
+    null_value = "NULL" if "NULL" in value else None
+    datatype_match = re.search(r'/\*([A-Z]+)', value)
+    datatype = datatype_match.group(1) if datatype_match else None
+    size_match = re.search(r'(\d+)', value)
+    size = size_match.group(1) if size_match else None
+    return null_value, datatype, size
+
+for value in df['Value']:
+    null_value, datatype, size = extract_data(str(value))
+    null_values.append(null_value)
+    data_types.append(datatype)
+    sizes.append(size)
+
+df['Column_1_Null_Values'] = null_values
+df['Column_2_Data_Types'] = data_types
+df['Column_3_Sizes'] = sizes
+
+df_filtered = df[['Column_1_Null_Values', 'Column_2_Data_Types', 'Column_3_Sizes']].dropna()
+
+df_filtered.to_csv('output_file.csv', index=False)
+
+print(df_filtered.head())
