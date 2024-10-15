@@ -9,8 +9,10 @@ extracted_column = df_input[column_to_extract]
 output_file = 'output.csv'
 df_output = pd.read_csv(output_file)
 
-if len(extracted_column) == len(df_output):
-    df_output.insert(0, column_to_extract, extracted_column)
-    df_output.to_csv(output_file, index=False)
-else:
-    print("Error: The number of rows in the input file and output file do not match.")
+new_column_df = pd.DataFrame({column_to_extract: extracted_column})
+
+if len(new_column_df) < len(df_output):
+    new_column_df = new_column_df.reindex(df_output.index)
+
+combined_df = pd.concat([new_column_df, df_output], axis=1)
+combined_df.to_csv(output_file, index=False)
