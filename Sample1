@@ -1,49 +1,20 @@
 import pandas as pd
 import re
 
-def extract_lengths(value):
-    """Extracts lengths from a string containing data type and length information.
+# Read the CSV file
+file_path = 'your_file.csv'  # Replace with your actual CSV file path
+df = pd.read_csv(file_path)
 
-    Args:
-        value (str): The input string.
+# Regular expression to find the value inside parentheses
+pattern = r"(.*?)"
 
-    Returns:
-        list: A list of extracted lengths.
-    """
+# Function to extract the value inside the parentheses
+def extract_value(text):
+    match = re.search(pattern, text)
+    return match.group(1) if match else None
 
-    match = re.findall(r'\b(VARCHAR2|CHAR|NUMBER)\s+(\d+)', value)
-    return [int(size) for _, size in match]
+# Assuming the value is inside the 'Type' column
+df['ValueInsideParentheses'] = df['Type'].apply(extract_value)
 
-def process_csv(input_file, column_name):
-    """Processes a CSV file to extract lengths from a specified column.
-
-    Args:
-        input_file (str): The input CSV file path.
-        column_name (str): The name of the column containing data type and length information.
-
-    Returns:
-        pandas.DataFrame: A DataFrame containing the extracted lengths.
-    """
-
-    df = pd.read_csv(input_file)
-
-    if column_name not in df.columns:
-        raise ValueError(f"Column '{column_name}' not found in the CSV file.")
-
-    lengths = []
-    for value in df[column_name].dropna().astype(str):
-        lengths.extend(extract_lengths(value))
-
-    df_lengths = pd.DataFrame(lengths, columns=['Length'])
-    return df_lengths
-
-input_file = 'input_data.csv'
-column_name = 'YourColumnName'
-
-df_lengths = process_csv(input_file, column_name)
-
-output_file = 'extracted_lengths.csv'
-df_lengths.to_csv(output_file, index=False)
-
-print(df_lengths)
-print(f"Lengths have been written to {output_file}.")
+# Display the updated DataFrame with extracted values
+print(df)
