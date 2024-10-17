@@ -1,8 +1,22 @@
 import pandas as pd
 
-df = pd.read_csv('input_file.csv')
-column_to_check = 'column_name'
-df['New_Column'] = df[column_to_check].apply(lambda x: 'Yes' if str(x).startswith('aaaa') else 'No')
-df.to_csv('output_file.csv', index=False)
+def read_cfr_file(file_path):
+    data = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            line = line.strip()
+            if "=" in line:
+                key_value = line.split("=")
+                if len(key_value) > 2:
+                    key = key_value[0].strip()
+                    value = "=".join(key_value[2:]).strip()
+                    data.append([key, value])
+    return data
 
-print("CSV file has been processed and saved.")
+cfr_file_path = 'dep_cb_c.dml'
+cfr_data = read_cfr_file(cfr_file_path)
+
+df = pd.DataFrame(cfr_data, columns=['Key', 'Value'])
+df.to_csv('output_genesis_DML_key_value.csv', index=False)
+
+print("CFR data saved to output_genesis_DML_key_value.csv")
