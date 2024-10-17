@@ -1,20 +1,8 @@
 import pandas as pd
-import re
 
-# Read the CSV file
-file_path = 'your_file.csv'  # Replace with your actual CSV file path
-df = pd.read_csv(file_path)
+df = pd.read_csv('input_file.csv')
+column_to_check = 'column_name'
+df['New_Column'] = df[column_to_check].apply(lambda x: 'Yes' if str(x).startswith('aaaa') else 'No')
+df.to_csv('output_file.csv', index=False)
 
-# Regular expression to find the value inside parentheses
-pattern = r"(.*?)"
-
-# Function to extract the value inside the parentheses
-def extract_value(text):
-    match = re.search(pattern, text)
-    return match.group(1) if match else None
-
-# Assuming the value is inside the 'Type' column
-df['ValueInsideParentheses'] = df['Type'].apply(extract_value)
-
-# Display the updated DataFrame with extracted values
-print(df)
+print("CSV file has been processed and saved.")
