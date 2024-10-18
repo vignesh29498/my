@@ -1,22 +1,14 @@
-import pandas as pd
+After connecting with the TCS Gen AI team, it was concluded that Gen AI is not preferable for ICD (Interface Control Document) generation.
 
-def read_cfr_file(file_path):
-    data = []
-    with open(file_path, 'r') as file:
-        for line in file:
-            line = line.strip()
-            if "=" in line:
-                key_value = line.split("=")
-                if len(key_value) > 2:
-                    key = key_value[0].strip()
-                    value = "=".join(key_value[2:]).strip()
-                    data.append([key, value])
-    return data
+Some groundwork has been completed, and the team will now connect with the Flexbus development team to understand the flow of the Ab Initio server. The team has received the necessary (.xfr and .dml) files from the Flexbus Ab Initio team. After analyzing the documents, they successfully generated all the fields for four columns so far.
 
-cfr_file_path = 'dep_cb_c.dml'
-cfr_data = read_cfr_file(cfr_file_path)
+The team is also working on how to incorporate transformation logic into the ICD document. They are connecting with and understanding the different architectures in the Ab Initio server.
 
-df = pd.DataFrame(cfr_data, columns=['Key', 'Value'])
-df.to_csv('output_genesis_DML_key_value.csv', index=False)
+In parallel, the team is studying the architecture and flow of the Talent server.
 
-print("CFR data saved to output_genesis_DML_key_value.csv")
+Gen AI:
+
+The team successfully generated test scenarios and test cases using Gen AI and shared them for review. However, it was observed that during the conversion from test scenarios to test cases, some mismatches occurred. The team has reached out to the Gen AI team to address this issue.
+
+Gen AI generates test scenarios in JSON format, which the team is converting into CSV. They are also working on the initial setup of Boardwalk code generation using Gen AI.
+
