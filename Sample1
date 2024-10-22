@@ -1,14 +1,28 @@
-After connecting with the TCS Gen AI team, it was concluded that Gen AI is not preferable for ICD (Interface Control Document) generation.
+import re
 
-Some groundwork has been completed, and the team will now connect with the Flexbus development team to understand the flow of the Ab Initio server. The team has received the necessary (.xfr and .dml) files from the Flexbus Ab Initio team. After analyzing the documents, they successfully generated all the fields for four columns so far.
+def extract_dml_info(file_path):
+    with open(file_path, 'r') as file:
+        dml_content = file.read()
 
-The team is also working on how to incorporate transformation logic into the ICD document. They are connecting with and understanding the different architectures in the Ab Initio server.
+    pattern = r'(\w+).*?maximum_length=(\d+) (\w+) = (NULL|NOT NULL)".*?";'
+    matches = re.findall(pattern, dml_content)
 
-In parallel, the team is studying the architecture and flow of the Talent server.
+    result = []
+    for match in matches:
+        datatype, max_length, field_name, null_status = match
+        result.append({
+            'datatype': datatype,
+            'max_length': max_length,
+            'field_name': field_name,
+            'null_status': null_status
+        })
+    
+    return result
 
-Gen AI:
+# File path to the DML file
+file_path = 'your_dml_file.dml'
+dml_info = extract_dml_info(file_path)
 
-The team successfully generated test scenarios and test cases using Gen AI and shared them for review. However, it was observed that during the conversion from test scenarios to test cases, some mismatches occurred. The team has reached out to the Gen AI team to address this issue.
-
-Gen AI generates test scenarios in JSON format, which the team is converting into CSV. They are also working on the initial setup of Boardwalk code generation using Gen AI.
-
+# Printing the extracted information
+for info in dml_info:
+    print(info)
