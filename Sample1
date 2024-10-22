@@ -1,28 +1,25 @@
 import re
+import csv
 
-def extract_dml_info(file_path):
-    with open(file_path, 'r') as file:
-        dml_content = file.read()
+def extract_dml_info(dml_file):
+    pattern = r"string\((\+|\-), maximum_length=(\d+)\) (\w+) = (NULL|NOT NULL)\(\"\"\)\;"
+    matches = re.findall(pattern, dml_file)
 
-    pattern = r'(\w+).*?maximum_length=(\d+) (\w+) = (NULL|NOT NULL)".*?";'
-    matches = re.findall(pattern, dml_content)
-
-    result = []
+    extracted_info = []
     for match in matches:
-        datatype, max_length, field_name, null_status = match
-        result.append({
-            'datatype': datatype,
-            'max_length': max_length,
-            'field_name': field_name,
-            'null_status': null_status
-        })
-    
-    return result
+        data_type, maximum_length, field_name, null_or_not_null = match
+        extracted_info.append((data_type, maximum_length, field_name, null_or_not_null))
 
-# File path to the DML file
-file_path = 'your_dml_file.dml'
-dml_info = extract_dml_info(file_path)
+    return extracted_info
 
-# Printing the extracted information
-for info in dml_info:
-    print(info)
+# Replace 'your_dml_file.txt' with the actual path to your DML file
+with open('your_dml_file.txt', 'r') as file:
+    dml_content = file.read()
+
+dml_info = extract_dml_info(dml_content)
+
+# Write the extracted information to a CSV file
+with open('extracted_dml_info.csv', 'w', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow(['Data Type', 'Maximum Length', 'Field Name', 'Null or Not Null'])
+    csv_writer.writerows(dml_info)
