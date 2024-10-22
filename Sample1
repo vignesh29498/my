@@ -1,25 +1,29 @@
-import re
-import csv
+import pandas as pd
 
-def extract_dml_info(dml_file):
-    pattern = r"string\((\+|\-), maximum_length=(\d+)\) (\w+) = (NULL|NOT NULL)\(\"\"\)\;"
-    matches = re.findall(pattern, dml_file)
+def read_cfr_file(file_path):
+    data = []
 
-    extracted_info = []
-    for match in matches:
-        data_type, maximum_length, field_name, null_or_not_null = match
-        extracted_info.append((data_type, maximum_length, field_name, null_or_not_null))
+    with open(file_path, 'r') as file:
+        for line in file:
+            line = line.strip()
+            
+            if "=" in line:
+                # Split the line based on '='
+                key_value = line.split("=")
+                
+                # Join all parts before the last '=' as key and take the part after the last '=' as value
+                key = "=".join(key_value[:-1]).strip()
+                value = key_value[-1].strip()
 
-    return extracted_info
+                data.append([key, value])
 
-# Replace 'your_dml_file.txt' with the actual path to your DML file
-with open('your_dml_file.txt', 'r') as file:
-    dml_content = file.read()
+    return data
 
-dml_info = extract_dml_info(dml_content)
+cfr_file_path = 'out.dml'
+cfr_data = read_cfr_file(cfr_file_path)
 
-# Write the extracted information to a CSV file
-with open('extracted_dml_info.csv', 'w', newline='') as csv_file:
-    csv_writer = csv.writer(csv_file)
-    csv_writer.writerow(['Data Type', 'Maximum Length', 'Field Name', 'Null or Not Null'])
-    csv_writer.writerows(dml_info)
+# Create a DataFrame and save to CSV
+df = pd.DataFrame(cfr_data, columns=['Key', 'Value'])
+df.to_csv('output_DML_key_value.csv', index=False)
+
+print(f"CFR data saved to output_DML_key_value.csv")
