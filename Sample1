@@ -1,29 +1,3 @@
-import pandas as pd
+Thank you for sharing the handoff files for the requested DML files. I noticed that there are still a few handoff files that I haven't received yet. Could you kindly share the remaining files when convenient? It would be very helpful for us to complete the process smoothly.
 
-def read_cfr_file(file_path):
-    data = []
-
-    with open(file_path, 'r') as file:
-        for line in file:
-            line = line.strip()
-            
-            if "=" in line:
-                # Split the line based on '='
-                key_value = line.split("=")
-                
-                # Join all parts before the last '=' as key and take the part after the last '=' as value
-                key = "=".join(key_value[:-1]).strip()
-                value = key_value[-1].strip()
-
-                data.append([key, value])
-
-    return data
-
-cfr_file_path = 'out.dml'
-cfr_data = read_cfr_file(cfr_file_path)
-
-# Create a DataFrame and save to CSV
-df = pd.DataFrame(cfr_data, columns=['Key', 'Value'])
-df.to_csv('output_DML_key_value.csv', index=False)
-
-print(f"CFR data saved to output_DML_key_value.csv")
+For your reference, I've attached a list of the files I have received and those that are still pending.
