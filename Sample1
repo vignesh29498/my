@@ -1,3 +1,14 @@
-Thank you for sharing the handoff files for the requested DML files. I noticed that there are still a few handoff files that I haven't received yet. Could you kindly share the remaining files when convenient? It would be very helpful for us to complete the process smoothly.
+The team connected with the FlexBus Ab Initio team to gain knowledge about various types of flows.
 
-For your reference, I've attached a list of the files I have received and those that are still pending.
+They requested DML files for 10 service IDs and received 6 files for 3 of those services.
+
+The team successfully converted the DML files into ICD format for four columns.
+
+They are also coordinating with the Flex team to differentiate between good and bad DML files using a UNIX script.
+
+GEN AI:
+
+The team engaged with the Gen AI team for support on generating a high volume of outputs.
+
+The Gen AI team provided inputs for reviewing the structure of the LLaMA message format and shared ideas for rewriting. The team is currently working on implementing these changes.
+
