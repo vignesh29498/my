@@ -1,4 +1,25 @@
-pip install sentence-transformers opencv-python-headless PyMuPDF scikit-image camelot-py pdfplumber
+pip install spacy opencv-python-headless PyMuPDF scikit-image camelot-py pdfplumber
+python -m spacy download en_core_web_md
+
+
+import spacy
+from pathlib import Path
+
+# Load pre-trained SpaCy model and save it as a new model
+nlp = spacy.load("en_core_web_md")
+
+# Define a function to save the model
+def save_spacy_model(nlp, output_dir):
+    output_dir = Path(output_dir)
+    if not output_dir.exists():
+        output_dir.mkdir()
+    nlp.to_disk(output_dir)
+    print(f"Model saved to {output_dir}")
+
+# Save the model for future use
+save_spacy_model(nlp, "./pdf_similarity_model")
+
+
 
 
 import fitz  # PyMuPDF
@@ -6,13 +27,12 @@ import cv2
 import numpy as np
 import camelot
 import pdfplumber
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 from skimage.metrics import structural_similarity as ssim
 from PIL import Image
+import spacy
 
-# Load pre-trained Sentence-BERT model
-model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
+# Load the saved model
+nlp = spacy.load("./pdf_similarity_model")
 
 def extract_text_from_pdf(pdf_path):
     """Extracts text from each page in a PDF file."""
@@ -26,11 +46,10 @@ def extract_text_from_pdf(pdf_path):
     return text_pages
 
 def calculate_text_similarity(text1, text2):
-    """Calculates cosine similarity between two texts."""
-    embeddings1 = model.encode([text1])
-    embeddings2 = model.encode([text2])
-    similarity = cosine_similarity(embeddings1, embeddings2)
-    return similarity[0][0]
+    """Calculates similarity between two texts using the SpaCy model."""
+    doc1 = nlp(text1)
+    doc2 = nlp(text2)
+    return doc1.similarity(doc2)
 
 def convert_pdf_page_to_image(pdf_path, page_num, dpi=100):
     """Converts a PDF page to an image using PyMuPDF."""
@@ -60,8 +79,7 @@ def compare_tables(table1, table2):
     """Compares tables from two PDFs by calculating text similarity."""
     if not table1 or not table2:
         return 0  # Return low similarity if one of the pages lacks a table
-    similarity = calculate_text_similarity(" ".join(table1), " ".join(table2))
-    return similarity
+    return calculate_text_similarity(" ".join(table1), " ".join(table2))
 
 def extract_font_info(pdf_path, page_num):
     """Extracts font information such as style and size from text in a PDF page using pdfplumber."""
@@ -99,32 +117,27 @@ def compare_pdfs(pdf_path1, pdf_path2, text_threshold=0.8, image_threshold=0.9, 
         if image_similarity < image_threshold:
             page_discrepancies["image_similarity"] = image_similarity
 
-        # Table comparison
-        table1 = extract_tables_from_pdf(pdf_path1, page_num)
-        table2 = extract_tables_from_pdf(pdf_path2, page_num)
-        table_similarity = compare_tables(table1, table2)
+        # Table similarity
+        tables1 = extract_tables_from_pdf(pdf_path1, page_num)
+        tables2 = extract_tables_from_pdf(pdf_path2, page_num)
+        table_similarity = compare_tables(tables1, tables2)
         if table_similarity < table_threshold:
             page_discrepancies["table_similarity"] = table_similarity
 
-        # Font style comparison
+        # Font information
         font_info1 = extract_font_info(pdf_path1, page_num)
         font_info2 = extract_font_info(pdf_path2, page_num)
         if not compare_font_info(font_info1, font_info2):
             page_discrepancies["font_mismatch"] = True
 
-        if len(page_discrepancies) > 1:  # If any discrepancy found on this page
+        # Collect discrepancies
+        if len(page_discrepancies) > 1:
             discrepancies.append(page_discrepancies)
 
     return discrepancies
 
-# Example usage
-pdf1_path = "old_version.pdf"
-pdf2_path = "new_version.pdf"
-discrepancies = compare_pdfs(pdf1_path, pdf2_path)
-
-if discrepancies:
-    print("Discrepancies found on the following pages:")
-    for d in discrepancies:
-        print(f"Page {d['page']}: {d}")
-else:
-    print("PDFs are similar based on the defined thresholds.")
+# Usage example
+pdf_path1 = "path/to/old_version.pdf"
+pdf_path2 = "path/to/new_version.pdf"
+discrepancies = compare_pdfs(pdf_path1, pdf_path2)
+print("Discrepancies found:", discrepancies)
