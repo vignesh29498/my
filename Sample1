@@ -1,27 +1,130 @@
-The team connected with the FlexBus Ab Initio team to gain knowledge about various types of flows.
-
-They requested DML files for 10 service IDs and received 6 files for 3 of those services.
-
-The team successfully converted the DML files into ICD format for four columns.
-
-They are also coordinating with the Flex team to differentiate between good and bad DML files using a UNIX script.
-
-GEN AI:
-
-The team engaged with the Gen AI team for support on generating a high volume of outputs.
-
-The Gen AI team provided inputs for reviewing the structure of the LLaMA message format and shared ideas for rewriting. T
+pip install sentence-transformers opencv-python-headless PyMuPDF scikit-image camelot-py pdfplumber
 
 
+import fitz  # PyMuPDF
+import cv2
+import numpy as np
+import camelot
+import pdfplumber
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+from skimage.metrics import structural_similarity as ssim
+from PIL import Image
 
-he team is currently working on implementing these changes.
+# Load pre-trained Sentence-BERT model
+model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
 
+def extract_text_from_pdf(pdf_path):
+    """Extracts text from each page in a PDF file."""
+    text_pages = []
+    pdf = fitz.open(pdf_path)
+    for page_num in range(pdf.page_count):
+        page = pdf[page_num]
+        text = page.get_text("text")
+        text_pages.append(text)
+    pdf.close()
+    return text_pages
 
-As discussed in today's call, please validate whether the attached .dat files are good or bad. Additionally, share your observations on whether they match the DML files.
+def calculate_text_similarity(text1, text2):
+    """Calculates cosine similarity between two texts."""
+    embeddings1 = model.encode([text1])
+    embeddings2 = model.encode([text2])
+    similarity = cosine_similarity(embeddings1, embeddings2)
+    return similarity[0][0]
 
+def convert_pdf_page_to_image(pdf_path, page_num, dpi=100):
+    """Converts a PDF page to an image using PyMuPDF."""
+    pdf = fitz.open(pdf_path)
+    page = pdf[page_num]
+    mat = fitz.Matrix(dpi / 72, dpi / 72)  # set the zoom factor
+    pix = page.get_pixmap(matrix=mat)
+    pdf.close()
+    return Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
 
+def calculate_image_similarity(img1, img2):
+    """Calculates structural similarity index (SSIM) between two images."""
+    img1_gray = np.array(img1.convert("L"))
+    img2_gray = np.array(img2.convert("L"))
+    score, diff = ssim(img1_gray, img2_gray, full=True)
+    return score
 
-As discussed, I'm sharing the handoff files for your analysis. Please validate these files and share your observations against the DML files.
+def extract_tables_from_pdf(pdf_path, page_num):
+    """Extracts tables from a specific PDF page using Camelot."""
+    tables = camelot.read_pdf(pdf_path, pages=str(page_num + 1), flavor='stream')
+    table_text = []
+    for table in tables:
+        table_text.append(table.df.to_string())
+    return table_text
 
+def compare_tables(table1, table2):
+    """Compares tables from two PDFs by calculating text similarity."""
+    if not table1 or not table2:
+        return 0  # Return low similarity if one of the pages lacks a table
+    similarity = calculate_text_similarity(" ".join(table1), " ".join(table2))
+    return similarity
 
+def extract_font_info(pdf_path, page_num):
+    """Extracts font information such as style and size from text in a PDF page using pdfplumber."""
+    font_info = []
+    with pdfplumber.open(pdf_path) as pdf:
+        page = pdf.pages[page_num]
+        for char in page.chars:
+            font_info.append((char['fontname'], char['size']))
+    return font_info
 
+def compare_font_info(font_info1, font_info2):
+    """Compares font information (style and size) between two pages."""
+    return set(font_info1) == set(font_info2)
+
+def compare_pdfs(pdf_path1, pdf_path2, text_threshold=0.8, image_threshold=0.9, table_threshold=0.75):
+    """Compares two PDFs by text, image, table, and font similarity page by page."""
+    text_pages1 = extract_text_from_pdf(pdf_path1)
+    text_pages2 = extract_text_from_pdf(pdf_path2)
+
+    page_count = min(len(text_pages1), len(text_pages2))
+    discrepancies = []
+
+    for page_num in range(page_count):
+        page_discrepancies = {"page": page_num + 1}
+
+        # Text similarity
+        text_similarity = calculate_text_similarity(text_pages1[page_num], text_pages2[page_num])
+        if text_similarity < text_threshold:
+            page_discrepancies["text_similarity"] = text_similarity
+
+        # Image similarity
+        img1 = convert_pdf_page_to_image(pdf_path1, page_num)
+        img2 = convert_pdf_page_to_image(pdf_path2, page_num)
+        image_similarity = calculate_image_similarity(img1, img2)
+        if image_similarity < image_threshold:
+            page_discrepancies["image_similarity"] = image_similarity
+
+        # Table comparison
+        table1 = extract_tables_from_pdf(pdf_path1, page_num)
+        table2 = extract_tables_from_pdf(pdf_path2, page_num)
+        table_similarity = compare_tables(table1, table2)
+        if table_similarity < table_threshold:
+            page_discrepancies["table_similarity"] = table_similarity
+
+        # Font style comparison
+        font_info1 = extract_font_info(pdf_path1, page_num)
+        font_info2 = extract_font_info(pdf_path2, page_num)
+        if not compare_font_info(font_info1, font_info2):
+            page_discrepancies["font_mismatch"] = True
+
+        if len(page_discrepancies) > 1:  # If any discrepancy found on this page
+            discrepancies.append(page_discrepancies)
+
+    return discrepancies
+
+# Example usage
+pdf1_path = "old_version.pdf"
+pdf2_path = "new_version.pdf"
+discrepancies = compare_pdfs(pdf1_path, pdf2_path)
+
+if discrepancies:
+    print("Discrepancies found on the following pages:")
+    for d in discrepancies:
+        print(f"Page {d['page']}: {d}")
+else:
+    print("PDFs are similar based on the defined thresholds.")
