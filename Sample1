@@ -261,3 +261,135 @@ pdf_path1 = "path/to/old_version.pdf"
 pdf_path2 = "path/to/new_version.pdf"
 discrepancies = compare_pdfs(pdf_path1, pdf_path2)
 print("Discrepancies found:", discrepancies)
+
+
+
+
+
+
+
+import fitz  # PyMuPDF for PDF handling
+import cv2
+import numpy as np
+import camelot
+import pdfplumber
+from skimage.metrics import structural_similarity as ssim
+from PIL import Image
+from difflib import Differ
+
+def extract_text_from_pdf(pdf_path):
+    """Extracts text from each page in a PDF file."""
+    text_pages = []
+    pdf = fitz.open(pdf_path)
+    for page_num in range(pdf.page_count):
+        page = pdf[page_num]
+        text = page.get_text("text")
+        text_pages.append(text)
+    pdf.close()
+    return text_pages
+
+def convert_pdf_page_to_image(pdf_path, page_num, dpi=100):
+    """Converts a PDF page to an image using PyMuPDF."""
+    pdf = fitz.open(pdf_path)
+    page = pdf[page_num]
+    mat = fitz.Matrix(dpi / 72, dpi / 72)  # set the zoom factor
+    pix = page.get_pixmap(matrix=mat)
+    pdf.close()
+    return Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+
+def calculate_image_similarity(img1, img2):
+    """Calculates structural similarity index (SSIM) between two images."""
+    img1_gray = np.array(img1.convert("L"))
+    img2_gray = np.array(img2.convert("L"))
+    score, _ = ssim(img1_gray, img2_gray, full=True)
+    return score
+
+def extract_tables_from_pdf(pdf_path, page_num):
+    """Extracts tables from a specific PDF page using Camelot."""
+    tables = camelot.read_pdf(pdf_path, pages=str(page_num + 1), flavor='stream')
+    table_text = []
+    for table in tables:
+        table_text.append(table.df.to_string())
+    return table_text
+
+def compare_tables(table1, table2):
+    """Compares tables by checking if the extracted table texts are the same."""
+    if not table1 or not table2:
+        return 0  # No similarity if one of the pages has no tables
+    return 1 if " ".join(table1) == " ".join(table2) else 0
+
+def extract_font_info(pdf_path, page_num):
+    """Extracts font information like style and size from text in a PDF page using pdfplumber."""
+    font_info = []
+    with pdfplumber.open(pdf_path) as pdf:
+        page = pdf.pages[page_num]
+        for char in page.chars:
+            font_info.append((char['fontname'], char['size']))
+    return font_info
+
+def compare_font_info(font_info1, font_info2):
+    """Compares font information (style and size) between two pages."""
+    return set(font_info1) == set(font_info2)
+
+def find_text_differences(text1, text2):
+    """Finds and returns differences between two pieces of text at the sentence level."""
+    differ = Differ()
+    diff = list(differ.compare(text1.splitlines(), text2.splitlines()))
+    mismatches = [line for line in diff if line.startswith('- ') or line.startswith('+ ')]
+    return mismatches
+
+def compare_pdfs(pdf_path1, pdf_path2, text_threshold=0.8, image_threshold=0.9, table_threshold=1):
+    """Compares two PDFs by text, image, table, and font similarity, page by page."""
+    text_pages1 = extract_text_from_pdf(pdf_path1)
+    text_pages2 = extract_text_from_pdf(pdf_path2)
+
+    page_count = min(len(text_pages1), len(text_pages2))
+    discrepancies = []
+
+    for page_num in range(page_count):
+        page_discrepancies = {"page": page_num + 1}
+
+        # Text similarity and specific differences
+        if text_pages1[page_num] != text_pages2[page_num]:
+            text_diffs = find_text_differences(text_pages1[page_num], text_pages2[page_num])
+            page_discrepancies["text_differences"] = text_diffs
+        else:
+            page_discrepancies["text_match"] = "All text matches"
+
+        # Image similarity
+        img1 = convert_pdf_page_to_image(pdf_path1, page_num)
+        img2 = convert_pdf_page_to_image(pdf_path2, page_num)
+        image_similarity = calculate_image_similarity(img1, img2)
+        if image_similarity < image_threshold:
+            page_discrepancies["image_similarity"] = image_similarity
+        else:
+            page_discrepancies["image_match"] = "Images are similar"
+
+        # Table similarity
+        tables1 = extract_tables_from_pdf(pdf_path1, page_num)
+        tables2 = extract_tables_from_pdf(pdf_path2, page_num)
+        table_similarity = compare_tables(tables1, tables2)
+        if table_similarity < table_threshold:
+            page_discrepancies["table_mismatch"] = tables1, tables2
+        else:
+            page_discrepancies["table_match"] = "All tables match"
+
+        # Font information
+        font_info1 = extract_font_info(pdf_path1, page_num)
+        font_info2 = extract_font_info(pdf_path2, page_num)
+        if not compare_font_info(font_info1, font_info2):
+            page_discrepancies["font_mismatch"] = font_info1, font_info2
+        else:
+            page_discrepancies["font_match"] = "All fonts match"
+
+        # Collect discrepancies
+        if len(page_discrepancies) > 1:
+            discrepancies.append(page_discrepancies)
+
+    return discrepancies
+
+# Example usage
+pdf_path1 = "path/to/old_version.pdf"
+pdf_path2 = "path/to/new_version.pdf"
+discrepancies = compare_pdfs(pdf_path1, pdf_path2)
+print("Discrepancies found:", discrepancies)
