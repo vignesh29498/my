@@ -1,3 +1,11 @@
+
+Regarding the automation, I need a knowledge transfer (KT) session for running the script. I am currently coordinating with the team on this and will keep you updated on the status.
+
+
+
+
+
+
 pip install spacy opencv-python-headless PyMuPDF scikit-image camelot-py pdfplumber
 python -m spacy download en_core_web_md
 
