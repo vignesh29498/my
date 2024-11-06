@@ -132,3 +132,192 @@ def compare_pdfs(pdf_path1, pdf_path2, ssim_threshold=0.9):
 pdf1_path = "path/to/first/pdf"
 pdf2_path = "path/to/second/pdf"
 compare_pdfs(pdf1_path, pdf2_path)
+
+
+
+
+
+
+
+
+
+Certainly! Below is the streamlined Jupyter notebook code that only focuses on the main comparison results printing, without the intermediate details. The extraction steps and intermediate outputs have been removed, leaving only the final comparison results:
+
+Jupyter Notebook Code (Main Comparison Only)
+
+
+---
+
+Cell 1: Imports
+
+# Import necessary libraries
+import pdfplumber
+from skimage.metrics import structural_similarity as ssim
+from PIL import Image
+import numpy as np
+from difflib import ndiff
+
+print("Libraries imported successfully.")
+
+
+---
+
+Cell 2: Set PDF Paths
+
+# Set the paths to the PDFs you want to compare
+pdf_path1 = "path/to/first/pdf"
+pdf_path2 = "path/to/second/pdf"
+
+# Print paths to confirm
+print(f"PDF Path 1: {pdf_path1}")
+print(f"PDF Path 2: {pdf_path2}")
+
+
+---
+
+Cell 3: Function to Extract Text from a PDF
+
+# Function to extract text from a PDF
+def extract_text_from_pdf(pdf_path):
+    text_data = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text()
+            if text:
+                text_data.append(text)
+    return text_data
+
+
+---
+
+Cell 4: Function to Extract Tables from a PDF
+
+# Function to extract tables from a PDF
+def extract_tables_from_pdf(pdf_path):
+    table_data = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            tables = page.extract_tables()
+            for table in tables:
+                table_data.append(table)
+    return table_data
+
+
+---
+
+Cell 5: Function to Extract and Crop Images from a PDF
+
+# Function to extract images from a PDF by cropping them
+def extract_images_from_pdf(pdf_path):
+    images = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            page_image = page.to_image()
+            for img in page.images:
+                bbox = (img["x0"], img["top"], img["x1"], img["bottom"])
+                cropped_image = page_image.original.crop(bbox)
+                images.append(cropped_image)
+    return images
+
+
+---
+
+Cell 6: Function to Calculate SSIM Between Two Images
+
+# Function to calculate SSIM between two images
+def calculate_ssim(image1, image2):
+    image1 = image1.convert("L")
+    image2 = image2.convert("L")
+    arr1 = np.array(image1)
+    arr2 = np.array(image2)
+    similarity = ssim(arr1, arr2)
+    return similarity
+
+
+---
+
+Cell 7: Main Comparison Function (Final Results)
+
+# Main comparison function with detailed difference extraction
+def compare_pdfs(pdf_path1, pdf_path2, ssim_threshold=0.9):
+    # Text comparison
+    print("Comparing text...")
+    text1 = extract_text_from_pdf(pdf_path1)
+    text2 = extract_text_from_pdf(pdf_path2)
+    
+    if text1 == text2:
+        print("Text Comparison: Identical")
+    else:
+        print("Text Comparison: Differences Detected")
+        for page_num, (page_text1, page_text2) in enumerate(zip(text1, text2), start=1):
+            if page_text1 != page_text2:
+                print(f"\nDifferences in Text on Page {page_num}:")
+                for line in ndiff(page_text1.splitlines(), page_text2.splitlines()):
+                    if line.startswith("- "):
+                        print(f"PDF 1 only: {line[2:]}")
+                    elif line.startswith("+ "):
+                        print(f"PDF 2 only: {line[2:]}")
+    
+    # Table comparison
+    print("\nComparing tables...")
+    tables1 = extract_tables_from_pdf(pdf_path1)
+    tables2 = extract_tables_from_pdf(pdf_path2)
+    
+    if tables1 == tables2:
+        print("Table Comparison: Identical")
+    else:
+        print("Table Comparison: Differences Detected")
+        for idx, (table1, table2) in enumerate(zip(tables1, tables2), start=1):
+            if table1 != table2:
+                print(f"\nDifferences in Table {idx}:")
+                for row_num, (row1, row2) in enumerate(zip(table1, table2), start=1):
+                    if row1 != row2:
+                        print(f"Row {row_num} differs:")
+                        for col_num, (cell1, cell2) in enumerate(zip(row1, row2), start=1):
+                            if cell1 != cell2:
+                                print(f"  Column {col_num}: PDF 1 = '{cell1}', PDF 2 = '{cell2}'")
+    
+    # Image comparison
+    print("\nComparing images...")
+    images1 = extract_images_from_pdf(pdf_path1)
+    images2 = extract_images_from_pdf(pdf_path2)
+    
+    if len(images1) != len(images2):
+        print(f"Image Comparison: Different number of images ({len(images1)} vs {len(images2)})")
+    else:
+        image_similarities = []
+        for img1, img2 in zip(images1, images2):
+            similarity = calculate_ssim(img1, img2)
+            image_similarities.append(similarity >= ssim_threshold)
+            print(f"Image SSIM Score: {similarity:.2f} - {'Identical' if similarity >= ssim_threshold else 'Different'}")
+
+        if all(image_similarities):
+            print("Image Comparison: Identical")
+        else:
+            print("Image Comparison: Differences Detected")
+
+# Run the full comparison
+compare_pdfs(pdf_path1, pdf_path2)
+
+
+---
+
+Explanation:
+
+Cell 1: Imports required libraries.
+
+Cell 2: Sets the PDF file paths for comparison.
+
+Cells 3–6: Defines functions for extracting text, tables, and images from PDFs, and for calculating SSIM for image comparison.
+
+Cell 7: The main comparison function (compare_pdfs) that compares text, tables, and images, and prints the final results indicating whether they are identical or different. It also prints detailed differences for each section if there are any.
+
+
+Final Results:
+
+When you run Cell 7, it will compare the two PDFs, printing the results of the text, table, and image comparisons in terms of whether they are identical or different. If differences are found, they will be displayed for the respective pages, tables, or images.
+
+
+Let me know if you'd like any further changes!
+
+
