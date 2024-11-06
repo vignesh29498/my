@@ -403,4 +403,16 @@ pdf1_path = "path/to/first/pdf"
 pdf2_path = "path/to/second/pdf"
 compare_pdfs(pdf1_path, pdf2_path)
 
-
+# Function to extract images from a PDF by cropping them
+def extract_images_from_pdf(pdf_path):
+    images = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            # Render the entire page as an image
+            page_image = page.to_image()
+            for img in page.images:
+                # Crop the image using its bounding box coordinates on the rendered page
+                bbox = (img["x0"], img["top"], img["x1"], img["bottom"])
+                cropped_image = page_image.original.crop(bbox)  # Use PIL's crop on the full page image
+                images.append(cropped_image)
+    return images
