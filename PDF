@@ -1,333 +1,55 @@
 import pdfplumber
-
-def extract_text_from_pdf(pdf_path):
-    text_data = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            text_data.append(page.extract_text())
-    return text_data
-
-def extract_tables_from_pdf(pdf_path):
-    table_data = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            tables = page.extract_tables()
-            for table in tables:
-                table_data.append(table)
-    return table_data
-
-def extract_images_from_pdf(pdf_path):
-    images_data = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            images = page.images
-            for img in images:
-                # Extracting image location and size information
-                images_data.append({
-                    "page_number": page.page_number,
-                    "x0": img["x0"], "top": img["top"],
-                    "x1": img["x1"], "bottom": img["bottom"],
-                    "width": img["width"], "height": img["height"]
-                })
-    return images_data
-
-def compare_text(text1, text2):
-    if text1 == text2:
-        print("Text is identical.")
-    else:
-        print("Differences in text detected.")
-
-def compare_tables(tables1, tables2):
-    if tables1 == tables2:
-        print("Tables are identical.")
-    else:
-        print("Differences in tables detected.")
-
-def compare_images(images1, images2):
-    if images1 == images2:
-        print("Images are identical.")
-    else:
-        print("Differences in images detected.")
-
-# Main function to compare two PDF files
-def compare_pdfs(pdf_path1, pdf_path2):
-    text1 = extract_text_from_pdf(pdf_path1)
-    text2 = extract_text_from_pdf(pdf_path2)
-    
-    tables1 = extract_tables_from_pdf(pdf_path1)
-    tables2 = extract_tables_from_pdf(pdf_path2)
-    
-    images1 = extract_images_from_pdf(pdf_path1)
-    images2 = extract_images_from_pdf(pdf_path2)
-    
-    print("Comparing text...")
-    compare_text(text1, text2)
-    
-    print("\nComparing tables...")
-    compare_tables(tables1, tables2)
-    
-    print("\nComparing images...")
-    compare_images(images1, images2)
-
-# Example usage
-pdf1_path = "path/to/first/pdf"
-pdf2_path = "path/to/second/pdf"
-compare_pdfs(pdf1_path, pdf2_path)
-
-
-
-
-
-
-
-
-
-import pdfplumber
-from skimage.metrics import structural_similarity as ssim
-from PIL import Image
-import numpy as np
-
-# Function to extract text from a PDF
-def extract_text_from_pdf(pdf_path):
-    text_data = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            text = page.extract_text()
-            if text:
-                text_data.append(text)
-    return text_data
-
-# Function to extract tables from a PDF
-def extract_tables_from_pdf(pdf_path):
-    table_data = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            tables = page.extract_tables()
-            for table in tables:
-                table_data.append(table)
-    return table_data
-
-# Function to extract images from a PDF
-def extract_images_from_pdf(pdf_path):
-    images = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            for img in page.images:
-                # Crop the image using its bounding box coordinates
-                image = page.to_image().crop((img["x0"], img["top"], img["x1"], img["bottom"]))
-                images.append(image)
-    return images
-
-# Function to calculate SSIM between two images
-def calculate_ssim(image1, image2):
-    # Convert images to grayscale and NumPy arrays for SSIM calculation
-    image1 = image1.convert("L")
-    image2 = image2.convert("L")
-    arr1 = np.array(image1)
-    arr2 = np.array(image2)
-    return ssim(arr1, arr2)
-
-# Main comparison function
-def compare_pdfs(pdf_path1, pdf_path2, ssim_threshold=0.9):
-    # Text comparison
-    text1 = extract_text_from_pdf(pdf_path1)
-    text2 = extract_text_from_pdf(pdf_path2)
-    text_similar = text1 == text2
-    print(f"Text Comparison: {'Identical' if text_similar else 'Differences Detected'}")
-
-    # Table comparison
-    tables1 = extract_tables_from_pdf(pdf_path1)
-    tables2 = extract_tables_from_pdf(pdf_path2)
-    tables_similar = tables1 == tables2
-    print(f"Table Comparison: {'Identical' if tables_similar else 'Differences Detected'}")
-
-    # Image comparison
-    images1 = extract_images_from_pdf(pdf_path1)
-    images2 = extract_images_from_pdf(pdf_path2)
-
-    if len(images1) != len(images2):
-        print("Image Comparison: Different number of images")
-    else:
-        image_similarities = []
-        for img1, img2 in zip(images1, images2):
-            similarity = calculate_ssim(img1, img2)
-            image_similarities.append(similarity >= ssim_threshold)
-            print(f"Image SSIM Score: {similarity:.2f} - {'Identical' if similarity >= ssim_threshold else 'Different'}")
-
-        images_similar = all(image_similarities)
-        print(f"Overall Image Comparison: {'Identical' if images_similar else 'Differences Detected'}")
-
-    # Final result
-    if text_similar and tables_similar and images_similar:
-        print("PDFs are identical.")
-    else:
-        print("PDFs have differences.")
-
-# Example usage
-pdf1_path = "path/to/first/pdf"
-pdf2_path = "path/to/second/pdf"
-compare_pdfs(pdf1_path, pdf2_path)
-
-
-
-
-
-import pdfplumber
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-
-# Load text embedding model
-model = SentenceTransformer('all-MiniLM-L6-v2')
-
-def extract_text_features(pdf_path):
-    text_data = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            text = page.extract_text()
-            if text:
-                text_data.append(text)
-    return text_data
-
-def generate_text_embeddings(text_data):
-    return model.encode(text_data)
-
-def extract_table_data(pdf_path):
-    table_data = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            tables = page.extract_tables()
-            for table in tables:
-                table_data.append(table)
-    return table_data
-
-def calculate_text_similarity(pdf1_path, pdf2_path):
-    text_data1 = extract_text_features(pdf1_path)
-    text_data2 = extract_text_features(pdf2_path)
-    
-    embeddings1 = generate_text_embeddings(text_data1)
-    embeddings2 = generate_text_embeddings(text_data2)
-    
-    similarity_scores = cosine_similarity(embeddings1, embeddings2)
-    avg_similarity = np.mean(similarity_scores)
-    return avg_similarity
-
-def calculate_table_similarity(pdf1_path, pdf2_path):
-    tables1 = extract_table_data(pdf1_path)
-    tables2 = extract_table_data(pdf2_path)
-    return 1.0 if tables1 == tables2 else 0.0
-
-
-
-
-
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-import joblib
-
-# Dummy data for training (replace with actual labeled data)
-# This assumes you have labeled data with similarity scores and labels
-# scores: List of (text_similarity, table_similarity)
-# labels: List of 1 for identical and 0 for different
-
-# Example (you should replace this with real data)
-scores = [
-    [0.95, 1.0],  # Example identical PDFs
-    [0.60, 0.0],  # Example different PDFs
-    [0.90, 1.0],
-    [0.50, 0.0],
-]
-labels = [1, 0, 1, 0]
-
-# Split data
-X_train, X_test, y_train, y_test = train_test_split(scores, labels, test_size=0.2, random_state=42)
-
-# Train the model
-clf = LogisticRegression()
-clf.fit(X_train, y_train)
-
-# Evaluate the model
-y_pred = clf.predict(X_test)
-print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
-
-
-
-
-import joblib
-
-# Save the model
-joblib.dump(clf, 'pdf_comparison_model.joblib')
-print("Model saved as 'pdf_comparison_model.joblib'")
-
-
-
-def compare_pdfs_with_model(pdf1_path, pdf2_path, model_path='pdf_comparison_model.joblib'):
-    # Load the trained model
-    clf = joblib.load(model_path)
-    
-    # Extract similarity scores
-    text_similarity = calculate_text_similarity(pdf1_path, pdf2_path)
-    table_similarity = calculate_table_similarity(pdf1_path, pdf2_path)
-    
-    # Prepare feature vector
-    features = [[text_similarity, table_similarity]]
-    
-    # Predict similarity (1 for identical, 0 for different)
-    prediction = clf.predict(features)
-    result = "Identical" if prediction[0] == 1 else "Different"
-    
-    print(f"PDFs are classified as: {result}")
-    print(f"Text Similarity Score: {text_similarity}")
-    print(f"Table Similarity Score: {table_similarity}")
-
-
-pdf1_path = "path/to/first/pdf"
-pdf2_path = "path/to/second/pdf"
-
-compare_pdfs_with_model(pdf1_path, pdf2_path)
-
-
-
-
-
-
-
-import pdfplumber
 from skimage.metrics import structural_similarity as ssim
 from PIL import Image
 import numpy as np
 from difflib import ndiff
 
-# Function to extract text from a PDF
+
+# Function to extract text from a PDF with intermediate results
 def extract_text_from_pdf(pdf_path):
     text_data = []
     with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
+        for page_num, page in enumerate(pdf.pages, start=1):
             text = page.extract_text()
             if text:
                 text_data.append(text)
+                print(f"Extracted text from page {page_num}:")
+                print(text[:500], "\n...")  # Printing the first 500 characters for brevity
     return text_data
 
-# Function to extract tables from a PDF
+
+
+# Function to extract tables from a PDF with intermediate results
 def extract_tables_from_pdf(pdf_path):
     table_data = []
     with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
+        for page_num, page in enumerate(pdf.pages, start=1):
             tables = page.extract_tables()
-            for table in tables:
+            for table_num, table in enumerate(tables, start=1):
                 table_data.append(table)
+                print(f"Extracted table {table_num} from page {page_num}:")
+                for row in table[:5]:  # Displaying first 5 rows for brevity
+                    print(row)
+                print("...")
     return table_data
 
-# Function to extract images from a PDF
+
+
+
+# Function to extract images from a PDF by cropping them
 def extract_images_from_pdf(pdf_path):
     images = []
     with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            for img in page.images:
-                image = page.to_image().crop((img["x0"], img["top"], img["x1"], img["bottom"]))
-                images.append(image)
+        for page_num, page in enumerate(pdf.pages, start=1):
+            page_image = page.to_image()
+            for img_num, img in enumerate(page.images, start=1):
+                bbox = (img["x0"], img["top"], img["x1"], img["bottom"])
+                cropped_image = page_image.original.crop(bbox)
+                images.append(cropped_image)
+                print(f"Extracted and cropped image {img_num} from page {page_num}")
     return images
+
+
 
 # Function to calculate SSIM between two images
 def calculate_ssim(image1, image2):
@@ -337,9 +59,12 @@ def calculate_ssim(image1, image2):
     arr2 = np.array(image2)
     return ssim(arr1, arr2)
 
-# Main comparison function with detailed difference extraction, including logo check
+
+
+# Main comparison function with detailed difference extraction
 def compare_pdfs(pdf_path1, pdf_path2, ssim_threshold=0.9):
     # Text comparison
+    print("Comparing text...")
     text1 = extract_text_from_pdf(pdf_path1)
     text2 = extract_text_from_pdf(pdf_path2)
     
@@ -357,6 +82,7 @@ def compare_pdfs(pdf_path1, pdf_path2, ssim_threshold=0.9):
                         print(f"PDF 2 only: {line[2:]}")
     
     # Table comparison
+    print("\nComparing tables...")
     tables1 = extract_tables_from_pdf(pdf_path1)
     tables2 = extract_tables_from_pdf(pdf_path2)
     
@@ -374,7 +100,8 @@ def compare_pdfs(pdf_path1, pdf_path2, ssim_threshold=0.9):
                             if cell1 != cell2:
                                 print(f"  Column {col_num}: PDF 1 = '{cell1}', PDF 2 = '{cell2}'")
     
-    # Image comparison with specific logo check (assumes first image is the logo)
+    # Image comparison
+    print("\nComparing images...")
     images1 = extract_images_from_pdf(pdf_path1)
     images2 = extract_images_from_pdf(pdf_path2)
     
@@ -398,21 +125,10 @@ def compare_pdfs(pdf_path1, pdf_path2, ssim_threshold=0.9):
     else:
         print("\nPDFs have differences.")
 
+
+
+
 # Example usage
 pdf1_path = "path/to/first/pdf"
 pdf2_path = "path/to/second/pdf"
 compare_pdfs(pdf1_path, pdf2_path)
-
-# Function to extract images from a PDF by cropping them
-def extract_images_from_pdf(pdf_path):
-    images = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            # Render the entire page as an image
-            page_image = page.to_image()
-            for img in page.images:
-                # Crop the image using its bounding box coordinates on the rendered page
-                bbox = (img["x0"], img["top"], img["x1"], img["bottom"])
-                cropped_image = page_image.original.crop(bbox)  # Use PIL's crop on the full page image
-                images.append(cropped_image)
-    return images
