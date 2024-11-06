@@ -1,234 +1,290 @@
-Here is the code split into individual cells. Each cell is self-contained, allowing you to run them one at a time in an interactive environment like Jupyter Notebook.
+import pdfplumber
+
+def extract_text_from_pdf(pdf_path):
+    text_data = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            text_data.append(page.extract_text())
+    return text_data
+
+def extract_tables_from_pdf(pdf_path):
+    table_data = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            tables = page.extract_tables()
+            for table in tables:
+                table_data.append(table)
+    return table_data
+
+def extract_images_from_pdf(pdf_path):
+    images_data = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            images = page.images
+            for img in images:
+                # Extracting image location and size information
+                images_data.append({
+                    "page_number": page.page_number,
+                    "x0": img["x0"], "top": img["top"],
+                    "x1": img["x1"], "bottom": img["bottom"],
+                    "width": img["width"], "height": img["height"]
+                })
+    return images_data
+
+def compare_text(text1, text2):
+    if text1 == text2:
+        print("Text is identical.")
+    else:
+        print("Differences in text detected.")
+
+def compare_tables(tables1, tables2):
+    if tables1 == tables2:
+        print("Tables are identical.")
+    else:
+        print("Differences in tables detected.")
+
+def compare_images(images1, images2):
+    if images1 == images2:
+        print("Images are identical.")
+    else:
+        print("Differences in images detected.")
+
+# Main function to compare two PDF files
+def compare_pdfs(pdf_path1, pdf_path2):
+    text1 = extract_text_from_pdf(pdf_path1)
+    text2 = extract_text_from_pdf(pdf_path2)
+    
+    tables1 = extract_tables_from_pdf(pdf_path1)
+    tables2 = extract_tables_from_pdf(pdf_path2)
+    
+    images1 = extract_images_from_pdf(pdf_path1)
+    images2 = extract_images_from_pdf(pdf_path2)
+    
+    print("Comparing text...")
+    compare_text(text1, text2)
+    
+    print("\nComparing tables...")
+    compare_tables(tables1, tables2)
+    
+    print("\nComparing images...")
+    compare_images(images1, images2)
+
+# Example usage
+pdf1_path = "path/to/first/pdf"
+pdf2_path = "path/to/second/pdf"
+compare_pdfs(pdf1_path, pdf2_path)
 
 
----
 
-Cell 1: Imports
 
-This cell loads all necessary libraries.
 
-import fitz  # PyMuPDF for PDF handling
-import numpy as np
-import camelot
+
+
+
+
 import pdfplumber
 from skimage.metrics import structural_similarity as ssim
 from PIL import Image
-from difflib import Differ
+import numpy as np
 
-
----
-
-Cell 2: Extract Text from PDF
-
-This function extracts text from each page in a PDF.
-
+# Function to extract text from a PDF
 def extract_text_from_pdf(pdf_path):
-    """Extracts text from each page in a PDF file."""
-    text_pages = []
-    pdf = fitz.open(pdf_path)
-    for page_num in range(pdf.page_count):
-        page = pdf[page_num]
-        text = page.get_text("text")
-        text_pages.append(text)
-    pdf.close()
-    return text_pages
-
-# Example usage:
-pdf_path1 = "path/to/old_version.pdf"
-pdf_path2 = "path/to/new_version.pdf"
-text_pages1 = extract_text_from_pdf(pdf_path1)
-text_pages2 = extract_text_from_pdf(pdf_path2)
-
-
----
-
-Cell 3: Convert PDF Page to Image
-
-This function converts a specific PDF page to an image.
-
-def convert_pdf_page_to_image(pdf_path, page_num, dpi=100):
-    """Converts a PDF page to an image using PyMuPDF."""
-    pdf = fitz.open(pdf_path)
-    page = pdf[page_num]
-    mat = fitz.Matrix(dpi / 72, dpi / 72)  # set the zoom factor
-    pix = page.get_pixmap(matrix=mat)
-    pdf.close()
-    return Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-
-# Example usage:
-img1 = convert_pdf_page_to_image(pdf_path1, 0)  # First page
-img2 = convert_pdf_page_to_image(pdf_path2, 0)  # First page
-
-
----
-
-Cell 4: Calculate Image Similarity
-
-This function calculates similarity between two images.
-
-def calculate_image_similarity(img1, img2):
-    """Calculates structural similarity index (SSIM) between two images."""
-    img1_gray = np.array(img1.convert("L"))
-    img2_gray = np.array(img2.convert("L"))
-    score, _ = ssim(img1_gray, img2_gray, full=True)
-    return score
-
-# Example usage:
-image_similarity = calculate_image_similarity(img1, img2)
-print("Image Similarity Score:", image_similarity)
-
-
----
-
-Cell 5: Extract Tables from PDF
-
-This function extracts tables from a specific PDF page.
-
-def extract_tables_from_pdf(pdf_path, page_num):
-    """Extracts tables from a specific PDF page using Camelot."""
-    tables = camelot.read_pdf(pdf_path, pages=str(page_num + 1), flavor='stream')
-    table_text = []
-    for table in tables:
-        table_text.append(table.df.to_string())
-    return table_text
-
-# Example usage:
-tables1 = extract_tables_from_pdf(pdf_path1, 0)  # First page
-tables2 = extract_tables_from_pdf(pdf_path2, 0)  # First page
-
-
----
-
-Cell 6: Compare Tables
-
-This function compares tables extracted from two PDF pages.
-
-def compare_tables(table1, table2):
-    """Compares tables by checking if the extracted table texts are the same."""
-    if not table1 or not table2:
-        return 0  # No similarity if one of the pages has no tables
-    return 1 if " ".join(table1) == " ".join(table2) else 0
-
-# Example usage:
-table_similarity = compare_tables(tables1, tables2)
-print("Table Similarity:", table_similarity)
-
-
----
-
-Cell 7: Extract Font Information
-
-This function extracts font information from text in a PDF page.
-
-def extract_font_info(pdf_path, page_num):
-    """Extracts font information like style and size from text in a PDF page using pdfplumber."""
-    font_info = []
+    text_data = []
     with pdfplumber.open(pdf_path) as pdf:
-        page = pdf.pages[page_num]
-        for char in page.chars:
-            font_info.append((char['fontname'], char['size']))
-    return font_info
+        for page in pdf.pages:
+            text = page.extract_text()
+            if text:
+                text_data.append(text)
+    return text_data
 
-# Example usage:
-font_info1 = extract_font_info(pdf_path1, 0)  # First page
-font_info2 = extract_font_info(pdf_path2, 0)  # First page
+# Function to extract tables from a PDF
+def extract_tables_from_pdf(pdf_path):
+    table_data = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            tables = page.extract_tables()
+            for table in tables:
+                table_data.append(table)
+    return table_data
 
+# Function to extract images from a PDF
+def extract_images_from_pdf(pdf_path):
+    images = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            for img in page.images:
+                # Crop the image using its bounding box coordinates
+                image = page.to_image().crop((img["x0"], img["top"], img["x1"], img["bottom"]))
+                images.append(image)
+    return images
 
----
+# Function to calculate SSIM between two images
+def calculate_ssim(image1, image2):
+    # Convert images to grayscale and NumPy arrays for SSIM calculation
+    image1 = image1.convert("L")
+    image2 = image2.convert("L")
+    arr1 = np.array(image1)
+    arr2 = np.array(image2)
+    return ssim(arr1, arr2)
 
-Cell 8: Compare Font Information
+# Main comparison function
+def compare_pdfs(pdf_path1, pdf_path2, ssim_threshold=0.9):
+    # Text comparison
+    text1 = extract_text_from_pdf(pdf_path1)
+    text2 = extract_text_from_pdf(pdf_path2)
+    text_similar = text1 == text2
+    print(f"Text Comparison: {'Identical' if text_similar else 'Differences Detected'}")
 
-This function compares font information between two pages.
+    # Table comparison
+    tables1 = extract_tables_from_pdf(pdf_path1)
+    tables2 = extract_tables_from_pdf(pdf_path2)
+    tables_similar = tables1 == tables2
+    print(f"Table Comparison: {'Identical' if tables_similar else 'Differences Detected'}")
 
-def compare_font_info(font_info1, font_info2):
-    """Compares font information (style and size) between two pages."""
-    return set(font_info1) == set(font_info2)
+    # Image comparison
+    images1 = extract_images_from_pdf(pdf_path1)
+    images2 = extract_images_from_pdf(pdf_path2)
 
-# Example usage:
-font_similarity = compare_font_info(font_info1, font_info2)
-print("Font Information Similarity:", font_similarity)
+    if len(images1) != len(images2):
+        print("Image Comparison: Different number of images")
+    else:
+        image_similarities = []
+        for img1, img2 in zip(images1, images2):
+            similarity = calculate_ssim(img1, img2)
+            image_similarities.append(similarity >= ssim_threshold)
+            print(f"Image SSIM Score: {similarity:.2f} - {'Identical' if similarity >= ssim_threshold else 'Different'}")
 
+        images_similar = all(image_similarities)
+        print(f"Overall Image Comparison: {'Identical' if images_similar else 'Differences Detected'}")
 
----
+    # Final result
+    if text_similar and tables_similar and images_similar:
+        print("PDFs are identical.")
+    else:
+        print("PDFs have differences.")
 
-Cell 9: Find Text Differences
-
-This function finds specific text differences between two pieces of text at the line level.
-
-def find_text_differences(text1, text2):
-    """Finds and returns differences between two pieces of text at the sentence level."""
-    differ = Differ()
-    diff = list(differ.compare(text1.splitlines(), text2.splitlines()))
-    mismatches = [line for line in diff if line.startswith('- ') or line.startswith('+ ')]
-    return mismatches
-
-# Example usage:
-text_diffs = find_text_differences(text_pages1[0], text_pages2[0])
-print("Text Differences:", text_diffs)
-
-
----
-
-Cell 10: Main Comparison Function
-
-This cell combines the previous functions into a main comparison function to check for discrepancies across all pages.
-
-def compare_pdfs(pdf_path1, pdf_path2, image_threshold=0.9, table_threshold=1):
-    """Compares two PDFs by text, image, table, and font similarity, page by page."""
-    text_pages1 = extract_text_from_pdf(pdf_path1)
-    text_pages2 = extract_text_from_pdf(pdf_path2)
-
-    page_count = min(len(text_pages1), len(text_pages2))
-    discrepancies = []
-
-    for page_num in range(page_count):
-        page_discrepancies = {"page": page_num + 1}
-
-        # Text similarity and specific differences
-        if text_pages1[page_num] != text_pages2[page_num]:
-            text_diffs = find_text_differences(text_pages1[page_num], text_pages2[page_num])
-            page_discrepancies["text_differences"] = text_diffs
-        else:
-            page_discrepancies["text_match"] = "All text matches"
-
-        # Image similarity
-        img1 = convert_pdf_page_to_image(pdf_path1, page_num)
-        img2 = convert_pdf_page_to_image(pdf_path2, page_num)
-        image_similarity = calculate_image_similarity(img1, img2)
-        if image_similarity < image_threshold:
-            page_discrepancies["image_similarity"] = image_similarity
-        else:
-            page_discrepancies["image_match"] = "Images are similar"
-
-        # Table similarity
-        tables1 = extract_tables_from_pdf(pdf_path1, page_num)
-        tables2 = extract_tables_from_pdf(pdf_path2, page_num)
-        table_similarity = compare_tables(tables1, tables2)
-        if table_similarity < table_threshold:
-            page_discrepancies["table_mismatch"] = tables1, tables2
-        else:
-            page_discrepancies["table_match"] = "All tables match"
-
-        # Font information
-        font_info1 = extract_font_info(pdf_path1, page_num)
-        font_info2 = extract_font_info(pdf_path2, page_num)
-        if not compare_font_info(font_info1, font_info2):
-            page_discrepancies["font_mismatch"] = font_info1, font_info2
-        else:
-            page_discrepancies["font_match"] = "All fonts match"
-
-        # Collect discrepancies
-        if len(page_discrepancies) > 1:
-            discrepancies.append(page_discrepancies)
-
-    return discrepancies
-
-# Example usage:
-discrepancies = compare_pdfs(pdf_path1, pdf_path2)
-print("Discrepancies found:", discrepancies)
+# Example usage
+pdf1_path = "path/to/first/pdf"
+pdf2_path = "path/to/second/pdf"
+compare_pdfs(pdf1_path, pdf2_path)
 
 
----
 
-Each cell is now independent, making it easy to run and debug step-by-step. Run each cell in sequence to execute the entire process. Let me know if further customization is needed!
+
+
+import pdfplumber
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+
+# Load text embedding model
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+def extract_text_features(pdf_path):
+    text_data = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text()
+            if text:
+                text_data.append(text)
+    return text_data
+
+def generate_text_embeddings(text_data):
+    return model.encode(text_data)
+
+def extract_table_data(pdf_path):
+    table_data = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            tables = page.extract_tables()
+            for table in tables:
+                table_data.append(table)
+    return table_data
+
+def calculate_text_similarity(pdf1_path, pdf2_path):
+    text_data1 = extract_text_features(pdf1_path)
+    text_data2 = extract_text_features(pdf2_path)
+    
+    embeddings1 = generate_text_embeddings(text_data1)
+    embeddings2 = generate_text_embeddings(text_data2)
+    
+    similarity_scores = cosine_similarity(embeddings1, embeddings2)
+    avg_similarity = np.mean(similarity_scores)
+    return avg_similarity
+
+def calculate_table_similarity(pdf1_path, pdf2_path):
+    tables1 = extract_table_data(pdf1_path)
+    tables2 = extract_table_data(pdf2_path)
+    return 1.0 if tables1 == tables2 else 0.0
+
+
+
+
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+import joblib
+
+# Dummy data for training (replace with actual labeled data)
+# This assumes you have labeled data with similarity scores and labels
+# scores: List of (text_similarity, table_similarity)
+# labels: List of 1 for identical and 0 for different
+
+# Example (you should replace this with real data)
+scores = [
+    [0.95, 1.0],  # Example identical PDFs
+    [0.60, 0.0],  # Example different PDFs
+    [0.90, 1.0],
+    [0.50, 0.0],
+]
+labels = [1, 0, 1, 0]
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(scores, labels, test_size=0.2, random_state=42)
+
+# Train the model
+clf = LogisticRegression()
+clf.fit(X_train, y_train)
+
+# Evaluate the model
+y_pred = clf.predict(X_test)
+print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
+
+
+
+
+import joblib
+
+# Save the model
+joblib.dump(clf, 'pdf_comparison_model.joblib')
+print("Model saved as 'pdf_comparison_model.joblib'")
+
+
+
+def compare_pdfs_with_model(pdf1_path, pdf2_path, model_path='pdf_comparison_model.joblib'):
+    # Load the trained model
+    clf = joblib.load(model_path)
+    
+    # Extract similarity scores
+    text_similarity = calculate_text_similarity(pdf1_path, pdf2_path)
+    table_similarity = calculate_table_similarity(pdf1_path, pdf2_path)
+    
+    # Prepare feature vector
+    features = [[text_similarity, table_similarity]]
+    
+    # Predict similarity (1 for identical, 0 for different)
+    prediction = clf.predict(features)
+    result = "Identical" if prediction[0] == 1 else "Different"
+    
+    print(f"PDFs are classified as: {result}")
+    print(f"Text Similarity Score: {text_similarity}")
+    print(f"Table Similarity Score: {table_similarity}")
+
+
+pdf1_path = "path/to/first/pdf"
+pdf2_path = "path/to/second/pdf"
+
+compare_pdfs_with_model(pdf1_path, pdf2_path)
+
 
