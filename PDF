@@ -288,3 +288,119 @@ pdf2_path = "path/to/second/pdf"
 compare_pdfs_with_model(pdf1_path, pdf2_path)
 
 
+
+
+
+
+
+import pdfplumber
+from skimage.metrics import structural_similarity as ssim
+from PIL import Image
+import numpy as np
+from difflib import ndiff
+
+# Function to extract text from a PDF
+def extract_text_from_pdf(pdf_path):
+    text_data = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text()
+            if text:
+                text_data.append(text)
+    return text_data
+
+# Function to extract tables from a PDF
+def extract_tables_from_pdf(pdf_path):
+    table_data = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            tables = page.extract_tables()
+            for table in tables:
+                table_data.append(table)
+    return table_data
+
+# Function to extract images from a PDF
+def extract_images_from_pdf(pdf_path):
+    images = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            for img in page.images:
+                image = page.to_image().crop((img["x0"], img["top"], img["x1"], img["bottom"]))
+                images.append(image)
+    return images
+
+# Function to calculate SSIM between two images
+def calculate_ssim(image1, image2):
+    image1 = image1.convert("L")
+    image2 = image2.convert("L")
+    arr1 = np.array(image1)
+    arr2 = np.array(image2)
+    return ssim(arr1, arr2)
+
+# Main comparison function with detailed difference extraction, including logo check
+def compare_pdfs(pdf_path1, pdf_path2, ssim_threshold=0.9):
+    # Text comparison
+    text1 = extract_text_from_pdf(pdf_path1)
+    text2 = extract_text_from_pdf(pdf_path2)
+    
+    if text1 == text2:
+        print("Text Comparison: Identical")
+    else:
+        print("Text Comparison: Differences Detected")
+        for page_num, (page_text1, page_text2) in enumerate(zip(text1, text2), start=1):
+            if page_text1 != page_text2:
+                print(f"\nDifferences in Text on Page {page_num}:")
+                for line in ndiff(page_text1.splitlines(), page_text2.splitlines()):
+                    if line.startswith("- "):
+                        print(f"PDF 1 only: {line[2:]}")
+                    elif line.startswith("+ "):
+                        print(f"PDF 2 only: {line[2:]}")
+    
+    # Table comparison
+    tables1 = extract_tables_from_pdf(pdf_path1)
+    tables2 = extract_tables_from_pdf(pdf_path2)
+    
+    if tables1 == tables2:
+        print("Table Comparison: Identical")
+    else:
+        print("Table Comparison: Differences Detected")
+        for idx, (table1, table2) in enumerate(zip(tables1, tables2), start=1):
+            if table1 != table2:
+                print(f"\nDifferences in Table {idx}:")
+                for row_num, (row1, row2) in enumerate(zip(table1, table2), start=1):
+                    if row1 != row2:
+                        print(f"Row {row_num} differs:")
+                        for col_num, (cell1, cell2) in enumerate(zip(row1, row2), start=1):
+                            if cell1 != cell2:
+                                print(f"  Column {col_num}: PDF 1 = '{cell1}', PDF 2 = '{cell2}'")
+    
+    # Image comparison with specific logo check (assumes first image is the logo)
+    images1 = extract_images_from_pdf(pdf_path1)
+    images2 = extract_images_from_pdf(pdf_path2)
+    
+    if len(images1) != len(images2):
+        print("Image Comparison: Different number of images")
+    else:
+        image_similarities = []
+        for idx, (img1, img2) in enumerate(zip(images1, images2), start=1):
+            similarity = calculate_ssim(img1, img2)
+            image_similarities.append(similarity >= ssim_threshold)
+            label = "Logo" if idx == 1 else f"Image {idx}"
+            status = "Identical" if similarity >= ssim_threshold else "Different"
+            print(f"{label} SSIM Score: {similarity:.2f} - {status}")
+        
+        images_similar = all(image_similarities)
+        print(f"Overall Image Comparison: {'Identical' if images_similar else 'Differences Detected'}")
+
+    # Final result
+    if text1 == text2 and tables1 == tables2 and all(image_similarities):
+        print("\nPDFs are identical.")
+    else:
+        print("\nPDFs have differences.")
+
+# Example usage
+pdf1_path = "path/to/first/pdf"
+pdf2_path = "path/to/second/pdf"
+compare_pdfs(pdf1_path, pdf2_path)
+
+
