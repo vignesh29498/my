@@ -1,17 +1,13 @@
-Scheduled a connect with TCS internal AI team and modified the input document and prompt based on their suggestion.
+The team converted DML files into ICD format and presented a demo to the client.
 
-Achieved around 70% accuracy for unique field handoff files, but still facing issues with repeating fields.
 
-Got another suggestion from TCS internal AI team to reference a sample JSON object for output, but accuracy is still below expectations.
+2. Based on client feedback, files were adjusted to match the standard ICD format.
 
-Scheduled a connect with the TCS COE team for further steps.
 
-Successfully generated test scenarios for AI test case generation but couldn't view all due to LLM limitations.
+3. Automated Java code validated the standard format, confirming consistency.
 
-Split the input into smaller parts in a loop to generate test cases in JSON format.
 
-Converted test cases into BDD format and then into Selenium Java code.
+4. Around 360 ICD files were generated and tested for the MENA cluster in the EMEA region.
 
-Completed a review with the functional team, and generated new test cases and scenarios based on their comments.
 
-Both files were shared with the functional team for final review.
+5. The team is working with the TEM and production teams to retrieve the remaining DML and DAT files for the MENA and SSA clusters.
