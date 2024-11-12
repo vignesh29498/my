@@ -1,17 +1,3 @@
-The team converted DML files into ICD format and presented a demo to the client.
+We are currently in the process of identifying the file IDs for each country/branch within the same cluster. We will share this information with you shortly.
 
-
-2. Based on client feedback, files were adjusted to match the standard ICD format.
-
-
-3. Automated Java code validated the standard format, confirming consistency.
-
-
-4. Around 360 ICD files were generated and tested for the MENA cluster in the EMEA region.
-
-
-5. The team is working with the TEM and production teams to retrieve the remaining DML and DAT files for the MENA and SSA clusters.
-
-
-Please find attached the handoff ICD automation validation results for the generated standard ICD files corresponding to the same service ID.
-
+In the meantime, could you please provide the balance DML file for the MENA cluster
