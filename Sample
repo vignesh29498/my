@@ -1,3 +1,17 @@
-We are currently in the process of identifying the file IDs for each country/branch within the same cluster. We will share this information with you shortly.
+The team successfully converted DML files into the Standard ICD format for 2 additional Service IDs for the MENA cluster under EMEA.
 
-In the meantime, could you please provide the balance DML file for the MENA cluster
+The conversion for 3 other Service IDs into the Standard ICD format is complete, and validation with handoff is currently in progress.
+
+The team identified 1 Service ID that could not be included in the ICD for the MENA cluster due to encryption issues.
+
+Additionally, the team is mapping File IDs to their respective Service IDs for the MENA and SSA clusters as part of the next phase of analysis.
+
+The team is coordinating and raising the necessary Change Management Processes (CMPs) to minimize dependency on the TEM and server teams.
+
+
+
+The team worked with CITI's internal IT team to resolve the Copilot issue within the CITI VDI environment. Copilot and Copilot Chat are now successfully connected.
+
+The team is utilizing Copilot Chat for defect prediction and has received updates accordingly.
+
+Efforts are focused on leveraging Gen AI solutions for test case generation and missing case prediction, with the goal of expanding AI capabilities for comprehensive test automation.
