@@ -321,3 +321,121 @@ When you run Cell 7, it will compare the two PDFs, printing the results of the t
 Let me know if you'd like any further changes!
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import pdfplumber
+from skimage.metrics import structural_similarity as ssim
+from PIL import Image
+import numpy as np
+from difflib import ndiff
+
+
+# Function to extract text from a PDF
+def extract_text_from_pdf(pdf_path):
+    full_text = ""
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text()
+            if text:
+                full_text += text + "\n"  # Combine text from all pages
+    return full_text.strip()
+
+
+# Function to extract all tables from a PDF
+def extract_tables_from_pdf(pdf_path):
+    all_tables = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            tables = page.extract_tables()
+            all_tables.extend(tables)  # Combine tables from all pages
+    return all_tables
+
+
+# Function to extract all images from a PDF
+def extract_images_from_pdf(pdf_path):
+    all_images = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            page_image = page.to_image()  # Convert page to image
+            for img in page.images:
+                bbox = (img["x0"], img["top"], img["x1"], img["bottom"])
+                cropped_image = page_image.original.crop(bbox)
+                all_images.append(cropped_image)
+    return all_images
+
+
+# Function to calculate SSIM between two images
+def calculate_ssim(image1, image2):
+    # Convert images to grayscale and NumPy arrays for SSIM calculation
+    image1 = image1.convert("L")
+    image2 = image2.convert("L")
+    arr1 = np.array(image1)
+    arr2 = np.array(image2)
+    return ssim(arr1, arr2)
+
+
+# Main comparison function
+def compare_pdfs(pdf_path1, pdf_path2, ssim_threshold=0.9):
+    print("Comparing Text...")
+    # Compare text
+    text1 = extract_text_from_pdf(pdf_path1)
+    text2 = extract_text_from_pdf(pdf_path2)
+    if text1 == text2:
+        print("Text: Identical")
+    else:
+        print("Text: Differences Detected")
+        print("\nDifferences in Text:")
+        diff = ndiff(text1.splitlines(), text2.splitlines())
+        for line in diff:
+            if line.startswith("- ") or line.startswith("+ "):
+                print(line)
+
+    print("\nComparing Tables...")
+    # Compare tables
+    tables1 = extract_tables_from_pdf(pdf_path1)
+    tables2 = extract_tables_from_pdf(pdf_path2)
+    if tables1 == tables2:
+        print("Tables: Identical")
+    else:
+        print("Tables: Differences Detected")
+        print("\nExtracted Tables from PDF 1:")
+        print(tables1)
+        print("\nExtracted Tables from PDF 2:")
+        print(tables2)
+
+    print("\nComparing Images...")
+    # Compare images
+    images1 = extract_images_from_pdf(pdf_path1)
+    images2 = extract_images_from_pdf(pdf_path2)
+
+    if len(images1) != len(images2):
+        print("Images: Different number of images found")
+    else:
+        for i, (img1, img2) in enumerate(zip(images1, images2)):
+            similarity = calculate_ssim(img1, img2)
+            print(f"Image {i + 1}: SSIM = {similarity:.2f} - {'Identical' if similarity >= ssim_threshold else 'Different'}")
+
+
+# Example usage
+pdf1_path = "path/to/first.pdf"
+pdf2_path = "path/to/second.pdf"
+compare_pdfs(pdf1_path, pdf2_path)
+
+
