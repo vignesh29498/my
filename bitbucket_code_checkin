@@ -1,0 +1,36 @@
+code = '''
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+
+# Load CSV file
+df = pd.read_csv("bitbucket_status.csv", parse_dates=["Date"])
+
+st.title("Bitbucket Code Check Dashboard")
+
+# Filters
+authors = df["Author"].unique()
+branches = df["Branch"].unique()
+
+selected_author = st.selectbox("Select Author", options=["All"] + list(authors))
+selected_branch = st.selectbox("Select Branch", options=["All"] + list(branches))
+
+filtered_df = df.copy()
+if selected_author != "All":
+    filtered_df = filtered_df[filtered_df["Author"] == selected_author]
+if selected_branch != "All":
+    filtered_df = filtered_df[filtered_df["Branch"] == selected_branch]
+
+# Status Count Plot
+status_counts = filtered_df["Status"].value_counts().reset_index()
+status_counts.columns = ["Status", "Count"]
+fig = px.bar(status_counts, x="Status", y="Count", color="Status", title="Build Status Counts")
+st.plotly_chart(fig)
+
+# Recent Commits
+st.subheader("Recent Commits")
+st.dataframe(filtered_df.sort_values("Date", ascending=False).head(10))
+'''
+
+with open("bitbucket_dashboard.py", "w") as f:
+    f.write(code)
