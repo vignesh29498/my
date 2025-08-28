@@ -1,0 +1,55 @@
+import csv
+
+class TeamMember:
+    def __init__(self, name, role, grade):
+        self.name = name
+        self.role = role
+        self.grade = grade
+        self.subordinates = []
+
+    def add_subordinate(self, member):
+        self.subordinates.append(member)
+
+    def display(self, level=0):
+        indent = "    " * level
+        print(f"{indent}- {self.name} ({self.role}, Grade: {self.grade})")
+        for sub in self.subordinates:
+            sub.display(level + 1)
+
+def build_team_tree(csv_filename):
+    members = {}
+
+    # First pass: Create all members
+    with open(csv_filename, mode='r', newline='') as file:
+        reader = csv.DictReader(file)
+        data = list(reader)
+        for row in data:
+            name = row['Name']
+            role = row['Role']
+            grade = row['Grade']
+            members[name] = TeamMember(name, role, grade)
+
+    # Second pass: Set relationships
+    root = None
+    for row in data:
+        name = row['Name']
+        manager_name = row['Manager']
+        if manager_name:
+            manager = members.get(manager_name)
+            if manager:
+                manager.add_subordinate(members[name])
+            else:
+                print(f"Warning: Manager {manager_name} not found for {name}")
+        else:
+            root = members[name]  # Top-most person (e.g., CEO)
+
+    return root
+
+# ===== MAIN =====
+if __name__ == "__main__":
+    hierarchy_root = build_team_tree("bitbucket_status_copy.csv")
+    print("Company Team Hierarchy:\n")
+    if hierarchy_root:
+        hierarchy_root.display()
+    else:
+        print("No root found in hierarchy.")
