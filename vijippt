@@ -1,0 +1,88 @@
+import csv
+from pptx import Presentation
+from pptx.util import Inches, Pt
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.dml.color import RGBColor
+
+
+class TeamMember:
+    def __init__(self, name, role, grade):
+        self.name = name
+        self.role = role
+        self.grade = grade
+        self.subordinates = []
+
+    def add_subordinate(self, member):
+        self.subordinates.append(member)
+
+    def get_hierarchy_lines(self, level=0):
+        lines = [("    " * level) + f"- {self.name} ({self.role}, Grade: {self.grade})"]
+        for sub in self.subordinates:
+            lines.extend(sub.get_hierarchy_lines(level + 1))
+        return lines
+
+
+def build_team_tree(csv_filename):
+    members = {}
+
+    with open(csv_filename, mode='r', newline='') as file:
+        reader = csv.DictReader(file)
+        data = list(reader)
+        for row in data:
+            name = row['Name']
+            role = row['Role']
+            grade = row['Grade']
+            members[name] = TeamMember(name, role, grade)
+
+    root = None
+    for row in data:
+        name = row['Name']
+        manager_name = row['Manager']
+        if manager_name:
+            manager = members.get(manager_name)
+            if manager:
+                manager.add_subordinate(members[name])
+            else:
+                print(f"Warning: Manager {manager_name} not found for {name}")
+        else:
+            root = members[name]
+    return root
+
+
+def save_hierarchy_to_ppt(root, ppt_filename):
+    prs = Presentation()
+    slide = prs.slides.add_slide(prs.slide_layouts[5])  # Blank layout
+
+    left = Inches(0.5)
+    top = Inches(0.5)
+    width = Inches(9)
+    height = Inches(6)
+
+    textbox = slide.shapes.add_textbox(left, top, width, height)
+    text_frame = textbox.text_frame
+
+    lines = root.get_hierarchy_lines()
+    first_line = text_frame.paragraphs[0]
+    first_line.text = lines[0]
+    first_line.font.size = Pt(16)
+
+    for line in lines[1:]:
+        p = text_frame.add_paragraph()
+        p.text = line
+        p.level = line.count("    ")  # Set bullet level
+        p.font.size = Pt(14)
+
+    prs.save(ppt_filename)
+    print(f"PPT saved to: {ppt_filename}")
+
+
+# ===== MAIN =====
+if __name__ == "__main__":
+    csv_file = "bitbucket_status_copy.csv"
+    ppt_file = "team_hierarchy.pptx"
+
+    root = build_team_tree(csv_file)
+    if root:
+        save_hierarchy_to_ppt(root, ppt_file)
+    else:
+        print("No root found in hierarchy.")
