@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gen-AI Newsletter</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+  }
+  .newsletter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+  }
+  .box {
+    flex: 1 1 45%;
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    position: relative;
+    min-width: 300px;
+    max-width: 500px;
+    overflow: hidden;
+    color: #333;
+  }
+  .box h2 {
+    margin-top: 0;
+    color: #222;
+  }
+  .status {
+    font-weight: bold;
+  }
+  .completed {
+    color: green;
+  }
+  .inprogress {
+    color: orange;
+  }
+  .bg-image {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.15;
+    border-radius: 12px;
+    z-index: 0;
+  }
+  .content {
+    position: relative;
+    z-index: 1;
+  }
+</style>
+</head>
+<body>
+<h1>Gen-AI Initiatives</h1>
+<div class="newsletter">
+
+  <!-- 1. Turbo AI -->
+  <div class="box" style="background-color:#e0f7fa;">
+    <img src="https://images.unsplash.com/photo-1612832021075-4ef1440e04a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMTc3M3wwfDF8c2VufDEwfHxhaXxlbnwwfHx8fDE2OTc0OTM0MDE&ixlib=rb-4.0.3&q=80&w=400" class="bg-image">
+    <div class="content">
+      <h2>Turbo AI</h2>
+      <p>Developed AI agents to automate activities in the testing lifecycle (test case design, defect tracking, reporting). Improves quality and reduces manual effort.</p>
+      <p class="status inprogress">🟡 In Progress</p>
+      <p>Environment: Citi Gemini 1.5 Pro, Python, Chroma DB</p>
+      <p>SPOC: Deepak M / Vignesh V</p>
+    </div>
+  </div>
+
+  <!-- 2. Enhancing Friday.AI -->
+  <div class="box" style="background-color:#fff3e0;">
+    <img src="https://images.unsplash.com/photo-1612831455543-7a5d106b5a16?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMTc3M3wwfDF8c2VufDE3fHxhaXxlbnwwfHx8fDE2OTc0OTM0MDE&ixlib=rb-4.0.3&q=80&w=400" class="bg-image">
+    <div class="content">
+      <h2>Enhancing Friday.AI</h2>
+      <p>Improved Friday.AI to integrate with Zephyr for identifying and removing duplicate test cases. Enhances efficiency and repository quality.</p>
+      <p class="status completed">🟢 Completed / 🟡 In Progress</p>
+      <p>Environment: Citi Gemini 2.0 Flash, Python, Java, React, MongoDB</p>
+      <p>SPOC: Deepak M / Himavanth</p>
+    </div>
+  </div>
+
+  <!-- 3. RAG-based Test Case Generation -->
+  <div class="box" style="background-color:#f3e5f5;">
+    <img src="https://images.unsplash.com/photo-1605902711622-cfb43c4439b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMTc3M3wwfDF8c2VufDE1fHxhaXxlbnwwfHx8fDE2OTc0OTM0MDE&ixlib=rb-4.0.3&q=80&w=400" class="bg-image">
+    <div class="content">
+      <h2>RAG-based Test Case Generation</h2>
+      <p>Leveraged RAG model to extract context from documentation and auto-generate test cases adhering to best practices.</p>
+      <p class="status inprogress">🟡 In Progress</p>
+      <p>Environment: Citi Gemini 1.5 Pro, Python, Chroma DB</p>
+      <p>SPOC: Prijesh / Chandra</p>
+    </div>
+  </div>
+
+  <!-- 4. Friday.AI for Scenario Generation -->
+  <div class="box" style="background-color:#e8f5e9;">
+    <img src="https://images.unsplash.com/photo-1612831455682-6715aa5ffabc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMTc3M3wwfDF8c2VufDE2fHxhaXxlbnwwfHx8fDE2OTc0OTM0MDE&ixlib=rb-4.0.3&q=80&w=400" class="bg-image">
+    <div class="content">
+      <h2>Friday.AI for Scenario Generation</h2>
+      <p>Generates test cases (positive & negative) and feature files from Jira stories automatically.</p>
+      <p class="status inprogress">🟡 In Progress</p>
+      <p>Environment: Citi Friday.AI</p>
+      <p>SPOC: Rajat G / Chandra</p>
+    </div>
+  </div>
+
+  <!-- 5. ICD Log Files Comparison -->
+  <div class="box" style="background-color:#fffde7;">
+    <img src="https://images.unsplash.com/photo-1612832021175-2f8e5b2fda10?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMTc3M3wwfDF8c2VufDE4fHxhaXxlbnwwfHx8fDE2OTc0OTM0MDE&ixlib=rb-4.0.3&q=80&w=400" class="bg-image">
+    <div class="content">
+      <h2>ICD Log Files Comparison</h2>
+      <p>GitHub Copilot generates scripts to validate ICD logs (XML/JSON) based on mapping templates for tag-level matching.</p>
+      <p class="status completed">🟢 Completed</p>
+      <p>Environment: Cam, GitHub Copilot, Python, Excel</p>
+      <p>SPOC: Sourav</p>
+    </div>
+  </div>
+
+  <!-- 6. AI Used for Code Refactoring -->
+  <div class="box" style="background-color:#e1f5fe;">
+    <img src="https://images.unsplash.com/photo-1612831455608-3a7b8a7b8b9c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMTc3M3wwfDF8c2VufDE4fHxhaXxlbnwwfHx8fDE2OTc0OTM0MDE&ixlib=rb-4.0.3&q=80&w=400" class="bg-image">
+    <div class="content">
+      <h2>AI Used for Code Refactoring</h2>
+      <p>Used Copilot to analyze and refactor existing code — removing redundancy, optimizing loops, improving modularity.</p>
+      <p class="status inprogress">🟡 In Progress</p>
+      <p>Environment: Citi, GitHub Copilot, IDEs</p>
+      <p>SPOC: Sourav</p>
+    </div>
+  </div>
+
+  <!-- 7. Friday.AI for Test Plan Generation -->
+  <div class="box" style="background-color:#fbe9e7;">
+    <img src="https://images.unsplash.com/photo-1612832021220-dab6b5d57b80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMTc3M3wwfDF8c2VufDE5fHxhaXxlbnwwfHx8fDE2OTc0OTM0MDE&ixlib=rb-4.0.3&q=80&w=400" class="bg-image">
+    <div class="content">
+      <h2>Friday.AI for Test Plan Generation</h2>
+      <p>Automatically generates test plans and cases from Jira stories and requirements, reducing manual effort.</p>
+      <p class="status inprogress">🟡 In Progress</p>
+      <p>Environment: Citi Friday.AI, Jira</p>
+      <p>SPOC: Sudipta / Sourav</p>
+    </div>
+  </div>
+
+  <!-- 8. RICA Simulator - Proposed Idea -->
+  <div class="box" style="background-color:#e8eaf6;">
+    <img src="https://images.unsplash.com/photo-1612831455595-c3b5f0a8fdbb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMTc3M3wwfDF8c2VufDIwfHxhaXxlbnwwfHx8fDE2OTc0OTM0MDE&ixlib=rb-4.0.3&q=80&w=400" class="bg-image">
+    <div class="content">
+      <h2>RICA Simulator - Proposed Idea</h2>
+      <p>Transform RICA "Simulator" into a R2D2-based Gen-AI LLM chatbot. Users ask questions in natural language; assistant executes PISMO APIs, runs scenarios, and presents results.</p>
+      <p class="status inprogress">🟡 In Progress</p>
+      <p>Key Features: Conversational Assistant, Natural Language to Action, Scenario Simulation & Results</p>
+      <p>Current State: Training data collection, backend configuration, R2D2 environment setup underway.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
