@@ -1,0 +1,8 @@
+{
+    "excel_file": "sample_jira_report.xlsx",
+    "sheet_name": "Pivot Sheets",
+    "pivot_order": [
+        "Status Summary Pivot",
+        "Another Pivot Table"
+    ]
+}
