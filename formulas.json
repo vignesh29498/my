@@ -1,27 +1,83 @@
 {
     "_README": [
         "=== HOW TO USE THIS FILE ===",
-        "",
-        "1. import_sheets: Add as many external Excel files as you need.",
-        "   Copy the block and change source_file, source_sheet, target_sheet_name.",
-        "",
-        "2. target_sheets: Add as many sheets as you want to add formula columns to.",
-        "   Each sheet has its own 'new_columns' list - add/remove freely.",
-        "",
-        "3. In formulas:",
-        "   {row}            -> replaced with actual row number (2, 3, 4...)",
-        "   {Column Header}  -> replaced with column letter based on header name in row 1",
-        "   Example: {Assignee}{row} becomes F2, F3, etc. if Assignee is in column F",
-        "",
-        "4. Supports ALL Excel formulas: VLOOKUP, IF, IFERROR, TEXT, SUM, AVERAGE,",
-        "   COUNTIF, SUMIF, CONCATENATE, LEFT, RIGHT, LEN, nested formulas, etc.",
-        "",
-        "5. New columns can reference each other (processed in order)."
+        "{row} = auto row number (2,3,4...)",
+        "{Column Header} = auto column letter from row 1 header name",
+        "Example: {Assignee}{row} becomes F2, F3... if Assignee is col F",
+        "New columns can reference each other (processed top to bottom)"
     ],
-
     "import_sheets": [
+        {
+            "source_file": "Stakeholders_List.xlsx",
+            "source_sheet": "Stakeholders List",
+            "target_sheet_name": "Stakeholders List"
+        }
     ],
-
     "target_sheets": [
+        {
+            "sheet_name": "Sheet1",
+            "new_columns": [
+                {
+                    "column_name": "Product",
+                    "formula": "=IFERROR(VLOOKUP({Custom field (Epic Link)}{row},'EPICS_454030'!A:AD,30,0),\"\")"
+                },
+                {
+                    "column_name": "Capability",
+                    "formula": "=IFERROR(VLOOKUP({Custom field (Epic Link)}{row},'EPICS_454030'!A:P,16,0),\"\")"
+                },
+                {
+                    "column_name": "Reopen Count",
+                    "formula": "=IFERROR(VLOOKUP({Issue key}{row},'Reopen Data'!A:B,2,0),0)"
+                },
+                {
+                    "column_name": "Reopen Type",
+                    "formula": "=IF({Reopen Count}{row}>=2,\"Reopen Twice\",IF({Reopen Count}{row}=1,\"Reopen Once\",\"No Reopen\"))"
+                },
+                {
+                    "column_name": "LOB",
+                    "formula": "=IFERROR(VLOOKUP({Custom field (Primary Application)}{row},'Reference'!A:B,2,0),\"\")"
+                },
+                {
+                    "column_name": "RCA Review",
+                    "formula": "=IFERROR(VLOOKUP({Issue key}{row},'RCA Data'!A:B,2,0),\"\")"
+                },
+                {
+                    "column_name": "Assignee Name",
+                    "formula": "=IFERROR(VLOOKUP({Assignee}{row},'Stakeholders List'!A:H,2,0),\"\")"
+                },
+                {
+                    "column_name": "Lead",
+                    "formula": "=IFERROR(VLOOKUP({Assignee}{row},'Stakeholders List'!A:I,7,0),\"\")"
+                },
+                {
+                    "column_name": "Assignee Team",
+                    "formula": "=IFERROR(VLOOKUP({Assignee}{row},'Stakeholders List'!A:I,5,0),\"\")"
+                },
+                {
+                    "column_name": "Lead Direct",
+                    "formula": "=IFERROR(VLOOKUP({Assignee}{row},'Stakeholders List'!A:F,6,0),\"\")"
+                },
+                {
+                    "column_name": "Creator Name",
+                    "formula": "=IFERROR(VLOOKUP({Creator}{row},'Stakeholders List'!A:H,2,0),\"\")"
+                },
+                {
+                    "column_name": "Reporter Name",
+                    "formula": "=IFERROR(VLOOKUP({Reporter}{row},'Stakeholders List'!A:H,2,0),\"\")"
+                },
+                {
+                    "column_name": "Test Type Category",
+                    "formula": "=IF({Custom field (Test Case Type)}{row}=\"E2E LOB QA\",\"UAT\",IF({Custom field (Test Case Type)}{row}=\"E2E Central\",\"UAT\",IF({Custom field (Test Case Type)}{row}=\"ERT\",\"UAT\",\"SIT\")))"
+                },
+                {
+                    "column_name": "Reporter Team",
+                    "formula": "=IFERROR(VLOOKUP({Reporter}{row},'Stakeholders List'!A:E,5,0),\"\")"
+                },
+                {
+                    "column_name": "Created Month",
+                    "formula": "=TEXT({Created}{row},\"MMM-YY\")"
+                }
+            ]
+        }
     ]
 }
