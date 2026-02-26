@@ -1,0 +1,27 @@
+{
+    "_README": [
+        "=== HOW TO USE THIS FILE ===",
+        "",
+        "1. import_sheets: Add as many external Excel files as you need.",
+        "   Copy the block and change source_file, source_sheet, target_sheet_name.",
+        "",
+        "2. target_sheets: Add as many sheets as you want to add formula columns to.",
+        "   Each sheet has its own 'new_columns' list - add/remove freely.",
+        "",
+        "3. In formulas:",
+        "   {row}            -> replaced with actual row number (2, 3, 4...)",
+        "   {Column Header}  -> replaced with column letter based on header name in row 1",
+        "   Example: {Assignee}{row} becomes F2, F3, etc. if Assignee is in column F",
+        "",
+        "4. Supports ALL Excel formulas: VLOOKUP, IF, IFERROR, TEXT, SUM, AVERAGE,",
+        "   COUNTIF, SUMIF, CONCATENATE, LEFT, RIGHT, LEN, nested formulas, etc.",
+        "",
+        "5. New columns can reference each other (processed in order)."
+    ],
+
+    "import_sheets": [
+    ],
+
+    "target_sheets": [
+    ]
+}
