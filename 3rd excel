@@ -1,28 +1,18 @@
 let
-    Source = Excel.Workbook(File.Contents("C:\Users\WV28874\Workspace\Cosmos-BABU\EXCEL\JM_E2E_Execution.xlsx"), null, true),
+    Source = Excel.Workbook(
+        File.Contents("C:\Users\WV28874\Workspace\Cosmos-BABU\EXCEL\JM_E2E_Execution.xlsx"),
+        null,
+        true
+    ),
 
-    // Select only sheets
-    SheetsOnly = Table.SelectRows(Source, each [Kind] = "Sheet"),
+    Sheets = Table.SelectRows(Source, each [Kind] = "Sheet"),
 
-    // Get Billing sheet separately
-    BillingSheet = Table.SelectRows(SheetsOnly, each [Name] = "Billing"){0}[Data],
+    Combined =
+        Table.Combine(
+            List.Transform(Sheets[Data], each
+                Table.Skip(_,1)
+            )
+        )
 
-    // Get header row from Billing
-    HeaderRow = Table.FirstN(BillingSheet, 1),
-
-    // Get data from Billing (skip header)
-    BillingData = Table.Skip(BillingSheet, 1),
-
-    // Get all sheets EXCEPT Billing
-    OtherSheets = Table.SelectRows(SheetsOnly, each [Name] <> "Billing"),
-
-    // Skip header from other sheets
-    OtherData = List.Transform(OtherSheets[Data], each Table.Skip(_, 1)),
-
-    // Combine Billing data + Other sheets data
-    CombinedData = Table.Combine(List.Combine({{BillingData}, OtherData})),
-
-    // Add header row and promote
-    FinalTable = Table.PromoteHeaders(Table.Combine({HeaderRow, CombinedData}))
 in
-    FinalTable
+    Combined
