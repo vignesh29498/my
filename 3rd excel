@@ -1,81 +1,28 @@
-import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-import joblib
+let
+    Source = Excel.Workbook(File.Contents("C:\Users\WV28874\Workspace\Cosmos-BABU\EXCEL\JM_E2E_Execution.xlsx"), null, true),
 
-# Step 1: Read the CSV file into a pandas DataFrame
-df = pd.read_csv('/content/generated_data.csv')
+    // Select only sheets
+    SheetsOnly = Table.SelectRows(Source, each [Kind] = "Sheet"),
 
-# Print the first few rows to verify the DataFrame structure
-print(df.head())
+    // Get Billing sheet separately
+    BillingSheet = Table.SelectRows(SheetsOnly, each [Name] = "Billing"){0}[Data],
 
-# Step 2: Feature extraction function
-def extract_features(value):
-    return {
-        'length': len(value),
-        'is_numeric': value.isdigit(),
-        'is_alphanumeric': value.isalnum(),
-        'has_hyphen': '-' in value
-    }
+    // Get header row from Billing
+    HeaderRow = Table.FirstN(BillingSheet, 1),
 
-# Apply feature extraction to the 'value' column
-df['features'] = df['value'].apply(extract_features)
+    // Get data from Billing (skip header)
+    BillingData = Table.Skip(BillingSheet, 1),
 
-# Step 3: Prepare data for training
-X_train = pd.DataFrame(list(df['features']))
-y_train = df['label']
+    // Get all sheets EXCEPT Billing
+    OtherSheets = Table.SelectRows(SheetsOnly, each [Name] <> "Billing"),
 
-# Step 4: Train a RandomForestClassifier
-model = RandomForestClassifier(random_state=42)
-model.fit(X_train, y_train)
+    // Skip header from other sheets
+    OtherData = List.Transform(OtherSheets[Data], each Table.Skip(_, 1)),
 
-# Step 5: Save the trained model
-model_file = 'column_name_prediction_model.pkl'
-joblib.dump(model, model_file)
+    // Combine Billing data + Other sheets data
+    CombinedData = Table.Combine(List.Combine({{BillingData}, OtherData})),
 
-print("Model training and saving completed.")
-
-
-
-
-import pandas as pd
-import joblib
-
-# Function to extract features from a value
-def extract_features(value):
-    return {
-        'length': len(value),
-        'is_numeric': value.isdigit(),
-        'is_alphanumeric': value.isalnum(),
-        'has_hyphen': '-' in value
-    }
-
-# Function to predict column name based on value
-def predict_column_name(value):
-    # Load the trained model
-    model_file = 'column_name_prediction_model.pkl'
-    model = joblib.load(model_file)
-    
-    # Extract features from the value
-    features = extract_features(value)
-    X_predict = pd.DataFrame([features])
-    
-    # Predict the column name
-    predicted_label = model.predict(X_predict)
-    
-    if predicted_label:
-        return predicted_label[0]
-    else:
-        return "No match found"
-
-# Example usage
-value_to_predict = '9586867657'  # Replace with your own value
-predicted_column = predict_column_name(value_to_predict)
-print(f"Predicted column name for '{value_to_predict}': {predicted_column}")
-
-value_to_predict = '12345'  # Replace with another value
-predicted_column = predict_column_name(value_to_predict)
-print(f"Predicted column name for '{value_to_predict}': {predicted_column}")
-
-value_to_predict = 'ABC123'  # Replace with another value
-predicted_column = predict_column_name(value_to_predict)
-print(f"Predicted column name for '{value_to_predict}': {predicted_column}")
+    // Add header row and promote
+    FinalTable = Table.PromoteHeaders(Table.Combine({HeaderRow, CombinedData}))
+in
+    FinalTable
